@@ -8,32 +8,102 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum OrderStatus {
-  PENDING
-  QUARANTINE
-  COMPLETED
-  CANCELLED
+model Material {
+  material_ID Int      @id @default(autoincrement())
+  lager_ID    Int
+  category    String?
+  farbe       String?
+  typ         String?
+  groesse     String?
+  url         String?
+
+  lager       Lager    @relation(fields: [lager_ID], references: [lager_ID])
+  eingaenge   Wareneingang[]
+  bestellungen Materialbestellungen[]
+  lagerbestaende Lagerbestand[]
+  mindestbestand Mindestbestand?
 }
 
-model Order {
-  id          String      @id @default(uuid())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  deletedAt   DateTime?
-  orderNumber String      @db.VarChar(255)
-  //
-  status      OrderStatus
-  customer    Customer    @relation(fields: [customerId], references: [id])
-  customerId  String
+model Wareneingang {
+  eingang_ID           Int      @id @default(autoincrement())
+  material_ID          Int
+  materialbestellung_g_ID Int
+  menge                Int
+  status               String?
+  qualitaet_ID         Int
+  lieferdatum          DateTime
+
+  material             Material @relation(fields: [material_ID], references: [material_ID])
+  bestellung           Materialbestellungen @relation(fields: [materialbestellung_g_ID], references: [materialbestellung_ID])
+  qualitaet            Qualitaet @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
+  lagerbestaende       Lagerbestand[]
 }
 
-model Customer {
-  id        String    @id @default(uuid())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  //
-  email     String
-  name      String?
-  orders    Order[]
+model Materialbestellungen {
+  materialbestellung_ID Int     @id @default(autoincrement())
+  lieferanten_ID        Int
+  material_ID           Int
+  status                String?
+
+  lieferant             Lieferant @relation(fields: [lieferanten_ID], references: [lieferant_ID])
+  material              Material  @relation(fields: [material_ID], references: [material_ID])
+  eingaenge             Wareneingang[]
+}
+
+model Lieferant {
+  lieferant_ID Int      @id @default(autoincrement())
+  firmenname   String?
+  kontaktperson String?
+  adresse_ID      Int @unique
+
+  adresse        Adresse   @relation(fields: [adresse_ID], references: [adresse_ID])
+  bestellungen Materialbestellungen[]
+}
+
+model Adresse {
+  adresse_ID Int      @id @default(autoincrement())
+  strasse    String?
+  ort        String?
+  plz        Int?
+
+  lieferant      Lieferant?
+}
+
+model Lager {
+  lager_ID     Int       @id @default(autoincrement())
+  bezeichnung  String?
+
+  materialien  Material[]
+  lagerbestaende Lagerbestand[]
+}
+
+model Qualitaet {
+  qualitaet_ID    Int     @id @default(autoincrement())
+  viskositaet     Float?
+  ppml            Int?
+  deltaE          Float?
+  saugfaehigkeit  Float?
+  weissgrad       Int?
+
+  eingaenge       Wareneingang[]
+}
+
+model Lagerbestand {
+  lagerbestand_ID Int      @id @default(autoincrement())
+  eingang_ID      Int
+  lager_ID        Int
+  material_ID     Int
+  menge           Int
+
+  eingang         Wareneingang @relation(fields: [eingang_ID], references: [eingang_ID])
+  lager           Lager        @relation(fields: [lager_ID], references: [lager_ID])
+  material        Material     @relation(fields: [material_ID], references: [material_ID])
+}
+
+model Mindestbestand {
+  mindestbestand_ID Int     @id @default(autoincrement())
+  material_ID       Int     @unique
+  mindestbestand    Int
+
+  material          Material @relation(fields: [material_ID], references: [material_ID])
 }
