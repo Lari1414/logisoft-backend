@@ -1,11 +1,15 @@
-import Fastify from 'fastify'
-import cors from '@fastify/cors'
-import { registerPlugins } from './plugins/register-plugins'
-import { registerModules } from './modules/register-modules'
+// src/utils/server.ts
+import Fastify, { FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
+import { registerPlugins } from './plugins/register-plugins';
+import { registerModules } from './modules/register-modules';
 
-export function createServer() {
-  const app = Fastify({ ignoreTrailingSlash: true, logger: true })
-
+export async function createServer(): Promise<FastifyInstance> {
+  const app = Fastify({ ignoreTrailingSlash: true, logger: true });
+  app.addHook('onRequest', (request, reply, done) => {
+    console.log(`Incoming request: ${request.raw.method} ${request.raw.url}`);
+    done(); // Gehe weiter zur nächsten Middleware oder Route
+  });
   app.register(cors, {
     origin: [
       'http://localhost:5173',
@@ -13,14 +17,18 @@ export function createServer() {
       'http://localhost:80',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  })
+  });
 
-  registerPlugins(app)
-  registerModules(app)
+  await registerPlugins(app);
+  await registerModules(app);
 
   app.get('/', () => {
-    return 'pong'
-  })
+    return 'pong';
+  });
+  app.after(() => {
+    console.log('\n📦 Registrierte API-Routen:');
+    app.printRoutes();
+  });
 
-  return app
+  return app;
 }

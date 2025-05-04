@@ -1,11 +1,19 @@
-import { PrismaClient } from '@prisma/client';
-import { Request, Response } from 'express';
+import { PrismaClient } from '../../generated/prisma';
+import { FastifyRequest, FastifyReply } from 'fastify';
 
 const prisma = new PrismaClient();
 
-export const createLieferant = async (req: Request, res: Response) => {
+export const createLieferant = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
-    const { firmenname, kontaktperson, adresse } = req.body;
+    const { firmenname, kontaktperson, adresse } = request.body as {
+      firmenname: string;
+      kontaktperson: string;
+      adresse: {
+        strasse: string;
+        ort: string;
+        plz: number;
+      };
+    };
 
     const neueAdresse = await prisma.adresse.create({
       data: adresse,
@@ -19,9 +27,9 @@ export const createLieferant = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json(neuerLieferant);
+    reply.status(201).send(neuerLieferant);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Fehler beim Anlegen' });
+    reply.status(500).send({ error: 'Fehler beim Anlegen' });
   }
 };

@@ -1,8 +1,6 @@
-import { Router } from 'express';
+import { FastifyInstance } from 'fastify';
 import { createLieferant } from '../controllers/lieferant.controller';
 
-const router = Router();
-
-router.post('/', createLieferant);
-
-export default router;
+export default async function lieferantenRoutes(app: FastifyInstance) {
+  app.post('/', createLieferant);
+}
