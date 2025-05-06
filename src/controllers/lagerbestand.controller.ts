@@ -9,6 +9,7 @@ interface CreateLagerbestandBody {
   lager_ID: number;
   material_ID: number;
   menge: number;
+  qualitaet_ID:number;
 }
 
 // POST: Lagerbestand anlegen
@@ -17,7 +18,7 @@ export const createLagerbestand = async (
   reply: FastifyReply
 ) => {
   try {
-    const { eingang_ID, lager_ID, material_ID, menge } = req.body;
+    const { eingang_ID, lager_ID, material_ID, menge,qualitaet_ID } = req.body;
 
     const neuerEintrag = await prisma.lagerbestand.create({
       data: {
@@ -25,6 +26,7 @@ export const createLagerbestand = async (
         lager_ID,
         material_ID,
         menge,
+        qualitaet_ID
       },
     });
 

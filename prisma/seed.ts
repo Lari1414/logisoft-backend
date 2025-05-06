@@ -6,14 +6,15 @@ faker.seed(123); // für konsistente Ergebnisse
 
 async function main() {
   // 1. Erstelle Lager 1 (Rohmateriallager) und Lager 2 (Fertigmateriallager)
+  await prisma.lager.deleteMany();
   let rohmaterialLager = await prisma.lager.findUnique({
     where: { lager_ID: 1 },
   });
 
   if (!rohmaterialLager) {
-    // Erstelle Lager 1 (Rohmateriallager), wenn es nicht existiert
     rohmaterialLager = await prisma.lager.create({
       data: {
+        lager_ID: 1,
         bezeichnung: 'Rohmateriallager',
       },
     });
@@ -24,9 +25,9 @@ async function main() {
   });
 
   if (!fertigmaterialLager) {
-    // Erstelle Lager 2 (Fertigmateriallager), wenn es nicht existiert
     fertigmaterialLager = await prisma.lager.create({
       data: {
+        lager_ID: 2,
         bezeichnung: 'Fertigmateriallager',
       },
     });
@@ -58,15 +59,16 @@ async function main() {
     )
   );
 
-  // 4. Erzeuge 10 Textilmaterialien und weise sie entweder Lager 1 oder Lager 2 zu
+  // 4. Erzeuge 10 Materialien mit festen Typen und Kategorie "T-Shirt"
+  const typVarianten = ['V-Ausschnitt', 'Oversize', 'Top', 'Sport', 'Rundhals'];
   const materialien = await Promise.all(
     Array.from({ length: 10 }).map(() =>
       prisma.material.create({
         data: {
-          lager_ID: Math.random() < 0.5 ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID,  // Zufällig Lager 1 oder Lager 2
-          category: 'Textil',  // Alle Materialien sind Textilmaterialien
+          lager_ID: Math.random() < 0.5 ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID,
+          category: 'T-Shirt',
           farbe: faker.color.human(),
-          typ: faker.commerce.productAdjective(),
+          typ: faker.helpers.arrayElement(typVarianten),
           groesse: faker.helpers.arrayElement(['S', 'M', 'L', 'XL']),
           url: faker.internet.url(),
         },
@@ -89,7 +91,7 @@ async function main() {
     )
   );
 
-  // 6. Materialbestellungen + Wareneingänge + Lagerbestand
+  // 6. Materialbestellungen, Wareneingänge, Lagerbestand
   for (let i = 0; i < 10; i++) {
     const mat = faker.helpers.arrayElement(materialien);
     const lieferant = faker.helpers.arrayElement(lieferanten);
@@ -109,7 +111,6 @@ async function main() {
         materialbestellung_ID: bestellung.materialbestellung_ID,
         menge: faker.number.int({ min: 10, max: 100 }),
         status: 'Eingelagert',
-        qualitaet_ID: quali.qualitaet_ID,
         lieferdatum: faker.date.recent(),
       },
     });
@@ -117,9 +118,10 @@ async function main() {
     await prisma.lagerbestand.create({
       data: {
         eingang_ID: eingang.eingang_ID,
-        lager_ID: mat.lager_ID,  // Verweist auf das korrekte Lager
+        lager_ID: mat.lager_ID,
         material_ID: mat.material_ID,
         menge: eingang.menge,
+        qualitaet_ID: quali.qualitaet_ID,
       },
     });
   }

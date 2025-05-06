@@ -8,7 +8,6 @@ interface EingangBody {
   materialbestellung_ID: number;
   menge: number;
   status?: string;
-  qualitaet_ID: number;
   lieferdatum: string; // ISO-Datumstring (z.B. "2025-05-04T00:00:00.000Z")
 }
 
@@ -21,7 +20,6 @@ export const createEingang = async (req: FastifyRequest<{ Body: EingangBody }>, 
         materialbestellung_ID: req.body.materialbestellung_ID,
         menge: req.body.menge,
         status: req.body.status,
-        qualitaet_ID: req.body.qualitaet_ID,
         lieferdatum: new Date(req.body.lieferdatum), // Umwandlung des Strings in ein Date-Objekt
       },
     });
@@ -39,7 +37,6 @@ export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply)
       include: {
         material: true,           // Bezug zum Material (Materialmodell)
         materialbestellung: true, // Bezug zur Materialbestellung
-        qualitaet: true,         // Bezug zur Qualität (Qualitätsmodell)
       },
     });
     reply.send(result);
@@ -57,7 +54,6 @@ export const getEingangById = async (req: FastifyRequest<{ Params: { id: string 
       include: {
         material: true,           // Bezug zum Material (Materialmodell)
         materialbestellung: true, // Bezug zur Materialbestellung
-        qualitaet: true,         // Bezug zur Qualität (Qualitätsmodell)
       },
     });
     if (!eingang) {

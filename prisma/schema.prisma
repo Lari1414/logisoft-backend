@@ -41,12 +41,10 @@ model Wareneingang {
   materialbestellung_ID Int
   menge                 Int
   status                String?
-  qualitaet_ID          Int
   lieferdatum           DateTime
 
   material           Material           @relation(fields: [material_ID], references: [material_ID])
   materialbestellung Materialbestellung @relation(fields: [materialbestellung_ID], references: [materialbestellung_ID])
-  qualitaet          Qualitaet          @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
   lagerbestaende     Lagerbestand[]
 }
 
@@ -85,7 +83,7 @@ model Qualitaet {
   saugfaehigkeit Float?
   weissgrad      Int?
 
-  eingaenge Wareneingang[]
+  eingaenge Lagerbestand[]
 }
 
 model Lagerbestand {
@@ -94,10 +92,12 @@ model Lagerbestand {
   lager_ID        Int
   material_ID     Int
   menge           Int
+  qualitaet_ID    Int
 
-  eingang  Wareneingang @relation(fields: [eingang_ID], references: [eingang_ID])
-  lager    Lager        @relation(fields: [lager_ID], references: [lager_ID])
-  material Material     @relation(fields: [material_ID], references: [material_ID])
+  eingang   Wareneingang @relation(fields: [eingang_ID], references: [eingang_ID])
+  lager     Lager        @relation(fields: [lager_ID], references: [lager_ID])
+  material  Material     @relation(fields: [material_ID], references: [material_ID])
+  qualitaet Qualitaet    @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
 }
 
 model Mindestbestand {
