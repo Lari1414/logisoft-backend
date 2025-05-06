@@ -18,5 +18,5 @@ export async function registerModules(app: FastifyInstance) {
   await app.register(adresseModule, { prefix: '/api/adressen' });
   await app.register(materialbestellungModule, { prefix: '/api/materialbestellungen' });
   await app.register(wareneingangModule, { prefix: '/api/wareneingaenge' });
-  await app.register(lagerbestandModule, { prefix: '/api/lagerbestaende' });
+  await app.register(lagerbestandModule, { prefix: '/api/lagerbestand' });
 }

@@ -1,6 +1,13 @@
 // src/routes/lagerbestand.routes.ts
 import { FastifyInstance } from 'fastify';
-import { createLagerbestand, getAllLagerbestaende, getLagerbestandById, updateLagerbestandById, deleteLagerbestandById } from '../controllers/lagerbestand.controller';
+import {
+  createLagerbestand,
+  getAllLagerbestaende,
+  getLagerbestandById,
+  updateLagerbestandById,
+  deleteLagerbestandById,
+  getMaterialBestand
+} from '../controllers/lagerbestand.controller'
 
 export default async function lagerbestandRoutes(app: FastifyInstance) {
   // POST: Lagerbestand erstellen
@@ -17,4 +24,6 @@ export default async function lagerbestandRoutes(app: FastifyInstance) {
 
   // DELETE: Lagerbestand löschen
   app.delete('/:id', deleteLagerbestandById);
+  //GET: Materialbestand - Schnittstelle 1
+  app.post('/materialbestand', getMaterialBestand);
 }
