@@ -9,7 +9,7 @@ datasource db {
 }
 
 model Material {
-  material_ID Int      @id @default(autoincrement())
+  material_ID Int     @id @default(autoincrement())
   lager_ID    Int
   category    String?
   farbe       String?
@@ -17,93 +17,93 @@ model Material {
   groesse     String?
   url         String?
 
-  lager       Lager    @relation(fields: [lager_ID], references: [lager_ID])
-  eingaenge   Wareneingang[]
-  bestellungen Materialbestellungen[]
+  lager          Lager                @relation(fields: [lager_ID], references: [lager_ID])
+  eingaenge      Wareneingang[]
+  bestellungen   Materialbestellung[]
   lagerbestaende Lagerbestand[]
   mindestbestand Mindestbestand?
 }
 
-model Wareneingang {
-  eingang_ID           Int      @id @default(autoincrement())
-  material_ID          Int
-  materialbestellung_g_ID Int
-  menge                Int
-  status               String?
-  qualitaet_ID         Int
-  lieferdatum          DateTime
-
-  material             Material @relation(fields: [material_ID], references: [material_ID])
-  bestellung           Materialbestellungen @relation(fields: [materialbestellung_g_ID], references: [materialbestellung_ID])
-  qualitaet            Qualitaet @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
-  lagerbestaende       Lagerbestand[]
-}
-
-model Materialbestellungen {
+model Materialbestellung {
   materialbestellung_ID Int     @id @default(autoincrement())
-  lieferanten_ID        Int
+  lieferant_ID          Int
   material_ID           Int
   status                String?
 
-  lieferant             Lieferant @relation(fields: [lieferanten_ID], references: [lieferant_ID])
-  material              Material  @relation(fields: [material_ID], references: [material_ID])
-  eingaenge             Wareneingang[]
+  lieferant Lieferant      @relation(fields: [lieferant_ID], references: [lieferant_ID])
+  material  Material       @relation(fields: [material_ID], references: [material_ID])
+  eingaenge Wareneingang[]
+}
+
+model Wareneingang {
+  eingang_ID            Int      @id @default(autoincrement())
+  material_ID           Int
+  materialbestellung_ID Int
+  menge                 Int
+  status                String?
+  qualitaet_ID          Int
+  lieferdatum           DateTime
+
+  material           Material           @relation(fields: [material_ID], references: [material_ID])
+  materialbestellung Materialbestellung @relation(fields: [materialbestellung_ID], references: [materialbestellung_ID])
+  qualitaet          Qualitaet          @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
+  lagerbestaende     Lagerbestand[]
 }
 
 model Lieferant {
-  lieferant_ID Int      @id @default(autoincrement())
-  firmenname   String?
-  kontaktperson String?
-  adresse_ID      Int @unique
+  lieferant_ID  Int    @id @default(autoincrement())
+  firmenname    String
+  kontaktperson String
+  adresse_ID    Int
 
-  adresse        Adresse   @relation(fields: [adresse_ID], references: [adresse_ID])
-  bestellungen Materialbestellungen[]
+  adresse      Adresse              @relation(fields: [adresse_ID], references: [adresse_ID])
+  bestellungen Materialbestellung[]
 }
 
 model Adresse {
-  adresse_ID Int      @id @default(autoincrement())
-  strasse    String?
-  ort        String?
-  plz        Int?
+  adresse_ID Int    @id @default(autoincrement())
+  strasse    String
+  ort        String
+  plz        Int
 
-  lieferant      Lieferant?
+  lieferanten Lieferant[]
 }
 
 model Lager {
-  lager_ID     Int       @id @default(autoincrement())
-  bezeichnung  String?
+  lager_ID    Int    @id @default(autoincrement())
+  bezeichnung String
 
-  materialien  Material[]
+  materialien    Material[]
   lagerbestaende Lagerbestand[]
 }
 
 model Qualitaet {
-  qualitaet_ID    Int     @id @default(autoincrement())
-  viskositaet     Float?
-  ppml            Int?
-  deltaE          Float?
-  saugfaehigkeit  Float?
-  weissgrad       Int?
+  qualitaet_ID   Int    @id @default(autoincrement())
+  viskositaet    Float?
+  ppml           Int?
+  deltaE         Float?
+  saugfaehigkeit Float?
+  weissgrad      Int?
 
-  eingaenge       Wareneingang[]
+  eingaenge Wareneingang[]
 }
 
 model Lagerbestand {
-  lagerbestand_ID Int      @id @default(autoincrement())
+  lagerbestand_ID Int @id @default(autoincrement())
   eingang_ID      Int
   lager_ID        Int
   material_ID     Int
   menge           Int
 
-  eingang         Wareneingang @relation(fields: [eingang_ID], references: [eingang_ID])
-  lager           Lager        @relation(fields: [lager_ID], references: [lager_ID])
-  material        Material     @relation(fields: [material_ID], references: [material_ID])
+  eingang  Wareneingang @relation(fields: [eingang_ID], references: [eingang_ID])
+  lager    Lager        @relation(fields: [lager_ID], references: [lager_ID])
+  material Material     @relation(fields: [material_ID], references: [material_ID])
 }
 
 model Mindestbestand {
-  mindestbestand_ID Int     @id @default(autoincrement())
-  material_ID       Int     @unique
+  mindestbestand_ID Int @id @default(autoincrement())
+  material_ID       Int @unique
   mindestbestand    Int
 
-  material          Material @relation(fields: [material_ID], references: [material_ID])
+  material Material @relation(fields: [material_ID], references: [material_ID])
 }

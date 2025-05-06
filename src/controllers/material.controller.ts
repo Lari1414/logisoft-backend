@@ -2,10 +2,8 @@
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
-// Prisma-Client-Instanz
 const prisma = new PrismaClient();
 
-// Interface für den Request Body
 interface CreateMaterialBody {
   lager_ID: number;
   category?: string;
@@ -20,7 +18,6 @@ export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialB
   try {
     const { lager_ID, category, farbe, typ, groesse, url } = req.body;
 
-    // Material in der Datenbank erstellen
     const newMaterial = await prisma.material.create({
       data: {
         lager_ID,
@@ -32,7 +29,7 @@ export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialB
       },
     });
 
-    return reply.status(201).send(newMaterial); // Rückgabe des neuen Materials
+    return reply.status(201).send(newMaterial);
   } catch (error) {
     console.error(error);
     return reply.status(500).send({ error: 'Fehler beim Erstellen des Materials' });
@@ -43,10 +40,72 @@ export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialB
 export const getAllMaterials = async (req: FastifyRequest, reply: FastifyReply) => {
   try {
     const materials = await prisma.material.findMany();
-    return reply.send(materials); // Rückgabe der Liste von Materialien
+    return reply.send(materials);
   } catch (error) {
     console.error(error);
     return reply.status(500).send({ error: 'Fehler beim Abrufen der Materialien' });
   }
 };
 
+// GET: Einzelnes Material abrufen
+export const getMaterialById = async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const material = await prisma.material.findUnique({
+      where: { material_ID: id },
+    });
+
+    if (!material) {
+      return reply.status(404).send({ error: 'Material nicht gefunden' });
+    }
+
+    return reply.send(material);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen des Materials' });
+  }
+};
+
+// PUT: Material aktualisieren
+export const updateMaterialById = async (req: FastifyRequest<{ Params: { id: string }, Body: Partial<CreateMaterialBody> }>, reply: FastifyReply) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const data = req.body;
+
+    const updated = await prisma.material.update({
+      where: { material_ID: id },
+      data,
+    });
+
+    return reply.send(updated);
+  } catch (error:any) {
+    console.error(error);
+
+    if (error.code === 'P2025') {
+      return reply.status(404).send({ error: 'Material nicht gefunden' });
+    }
+
+    return reply.status(500).send({ error: 'Fehler beim Aktualisieren des Materials' });
+  }
+};
+
+// DELETE: Material löschen
+export const deleteMaterialById = async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    await prisma.material.delete({
+      where: { material_ID: id },
+    });
+
+    return reply.status(204).send();
+  } catch (error:any) {
+    console.error(error);
+
+    if (error.code === 'P2025') {
+      return reply.status(404).send({ error: 'Material nicht gefunden' });
+    }
+
+    return reply.status(500).send({ error: 'Fehler beim Löschen des Materials' });
+  }
+};

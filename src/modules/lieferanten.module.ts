@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import lieferantenRoutes from '../routes/lieferanten.routes'; // richtiger Pfad zur Route
+import lieferantRoutes from '../routes/lieferanten.routes';
 
-export async function lieferantenModule(app: FastifyInstance) {
-  await app.register(lieferantenRoutes); // alle Routen werden eingebunden
+export async function lieferantModule(app: FastifyInstance) {
+  await app.register(lieferantRoutes);
 }
