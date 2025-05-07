@@ -34,9 +34,9 @@ async function main() {
     });
   }
 
-  // 2. Erzeuge 5 Adressen
+  // 2. Erzeuge 3 Adressen
   const adressen = await Promise.all(
-    Array.from({ length: 5 }).map(() =>
+    Array.from({ length: 3 }).map(() =>
       prisma.adresse.create({
         data: {
           strasse: faker.location.streetAddress(),
@@ -47,7 +47,7 @@ async function main() {
     )
   );
 
-  // 3. Erzeuge 5 Lieferanten mit Adresse
+  // 3. Erzeuge 3 Lieferanten mit Adresse
   const lieferanten = await Promise.all(
     adressen.map((adresse) =>
       prisma.lieferant.create({
@@ -60,10 +60,10 @@ async function main() {
     )
   );
 
-  // 4. Erzeuge 10 Materialien mit festen Typen und Kategorie "T-Shirt"
+  // 4. Erzeuge 5 Materialien mit festen Typen und Kategorie "T-Shirt"
   const typVarianten = ['V-Ausschnitt', 'Oversize', 'Top', 'Sport', 'Rundhals'];
   const materialien = await Promise.all(
-    Array.from({ length: 10 }).map(() =>
+    Array.from({ length: 5 }).map(() =>
       prisma.material.create({
         data: {
           lager_ID: Math.random() < 0.5 ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID,
@@ -77,10 +77,10 @@ async function main() {
     )
   );
 
-  // 4. Erzeuge 5 Rohmaterialien
+  // 4. Erzeuge 3 Rohmaterialien
   const categorys = ['Verpackung', 'Farbe', 'Druckfolie'];
   const rohmaterialien = await Promise.all(
-    Array.from({ length: 5 }).map(() =>
+    Array.from({ length: 3 }).map(() =>
       prisma.material.create({
         data: {
           lager_ID: rohmaterialLager.lager_ID,
@@ -96,7 +96,7 @@ async function main() {
 
   // 5. Erzeuge Qualitäten
   const qualitaeten = await Promise.all(
-    Array.from({ length: 5 }).map(() =>
+    Array.from({ length: 3 }).map(() =>
       prisma.qualitaet.create({
         data: {
           viskositaet: faker.number.float({ min: 0.5, max: 5.0 }),
@@ -110,7 +110,7 @@ async function main() {
   );
 
   // 6. Materialbestellungen, Wareneingänge, Lagerbestand
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     const mat = faker.helpers.arrayElement(materialien);
     const lieferant = faker.helpers.arrayElement(lieferanten);
     const quali = faker.helpers.arrayElement(qualitaeten);
@@ -145,7 +145,7 @@ async function main() {
   }
 
   // 6. Materialbestellungen, Wareneingänge, Lagerbestand für Rohmaterial
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 3; i++) {
     const rohmat = faker.helpers.arrayElement(rohmaterialien);
     const rohmatlieferant = faker.helpers.arrayElement(lieferanten);
 
