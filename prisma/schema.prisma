@@ -92,12 +92,12 @@ model Lagerbestand {
   lager_ID        Int
   material_ID     Int
   menge           Int
-  qualitaet_ID    Int
+  qualitaet_ID    Int?
 
   eingang   Wareneingang @relation(fields: [eingang_ID], references: [eingang_ID])
   lager     Lager        @relation(fields: [lager_ID], references: [lager_ID])
   material  Material     @relation(fields: [material_ID], references: [material_ID])
-  qualitaet Qualitaet    @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
+  qualitaet Qualitaet?    @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
 }
 
 model Mindestbestand {

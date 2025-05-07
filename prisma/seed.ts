@@ -1,3 +1,4 @@
+import { nullable } from 'zod';
 import { PrismaClient } from '../generated/prisma';
 import { faker } from '@faker-js/faker';
 
@@ -76,6 +77,23 @@ async function main() {
     )
   );
 
+  // 4. Erzeuge 10 Rohmaterialien
+  const categorys = ['Verpackung', 'Farbe', 'Druckfolie'];
+  const rohmaterialien = await Promise.all(
+    Array.from({ length: 10 }).map(() =>
+      prisma.material.create({
+        data: {
+          lager_ID: rohmaterialLager.lager_ID,
+          category: faker.helpers.arrayElement(categorys),
+          farbe: faker.color.human(),
+          typ: null,
+          groesse: null,
+          url: null,
+        },
+      })
+    )
+  );
+
   // 5. Erzeuge Qualitäten
   const qualitaeten = await Promise.all(
     Array.from({ length: 5 }).map(() =>
@@ -122,6 +140,39 @@ async function main() {
         material_ID: mat.material_ID,
         menge: eingang.menge,
         qualitaet_ID: quali.qualitaet_ID,
+      },
+    });
+  }
+
+  // 6. Materialbestellungen, Wareneingänge, Lagerbestand für Rohmaterial
+  for (let i = 0; i < 10; i++) {
+    const rohmat = faker.helpers.arrayElement(rohmaterialien);
+    const rohmatlieferant = faker.helpers.arrayElement(lieferanten);
+
+    const rohmatbestellung = await prisma.materialbestellung.create({
+      data: {
+        lieferant_ID: rohmatlieferant.lieferant_ID,
+        material_ID: rohmat.material_ID,
+        status: 'Bestellt',
+      },
+    });
+
+    const rohmateingang = await prisma.wareneingang.create({
+      data: {
+        material_ID: rohmat.material_ID,
+        materialbestellung_ID: rohmatbestellung.materialbestellung_ID,
+        menge: faker.number.int({ min: 10, max: 100 }),
+        status: 'Eingelagert',
+        lieferdatum: faker.date.recent(),
+      },
+    });
+
+    await prisma.lagerbestand.create({
+      data: {
+        eingang_ID: rohmateingang.eingang_ID,
+        lager_ID: rohmat.lager_ID,
+        material_ID: rohmat.material_ID,
+        menge: rohmateingang.menge
       },
     });
   }
