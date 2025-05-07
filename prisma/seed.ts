@@ -77,10 +77,10 @@ async function main() {
     )
   );
 
-  // 4. Erzeuge 10 Rohmaterialien
+  // 4. Erzeuge 5 Rohmaterialien
   const categorys = ['Verpackung', 'Farbe', 'Druckfolie'];
   const rohmaterialien = await Promise.all(
-    Array.from({ length: 10 }).map(() =>
+    Array.from({ length: 5 }).map(() =>
       prisma.material.create({
         data: {
           lager_ID: rohmaterialLager.lager_ID,
@@ -145,7 +145,7 @@ async function main() {
   }
 
   // 6. Materialbestellungen, Wareneingänge, Lagerbestand für Rohmaterial
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     const rohmat = faker.helpers.arrayElement(rohmaterialien);
     const rohmatlieferant = faker.helpers.arrayElement(lieferanten);
 

@@ -240,3 +240,101 @@ export const rohmaterialBereitstellen = async (
         return reply.status(500).send({ error: 'Interner Serverfehler' });
     }
 };
+
+export const rohmaterialZurueckgeben = async (
+    req: FastifyRequest<{
+        Body: {
+            artikelnummer: number;
+            menge: number;
+            qualitaet: {
+                viskositaet?: number | null;
+                ppml?: number | null;
+                deltaE?: number | null;
+                saugfaehigkeit?: number | null;
+                weissgrad?: number | null;
+            };
+        };
+    }>,
+    reply: FastifyReply
+) => {
+    try {
+        const { artikelnummer, menge, qualitaet } = req.body;
+
+        if (!artikelnummer || !menge || menge <= 0) {
+            return reply.status(400).send({ error: 'Ungültige Daten' });
+        }
+
+        // Rohmateriallager-ID ermitteln
+        const rohLager = await prisma.lager.findFirst({
+            where: { bezeichnung: 'Rohmateriallager' },
+        });
+
+        if (!rohLager) {
+            return reply.status(500).send({ error: 'Rohmateriallager nicht gefunden' });
+        }
+
+        // Suche nach vorhandener Qualität
+        const vorhandeneQualitaet = await prisma.qualitaet.findFirst({
+            where: qualitaet,
+        });
+
+        let qualitaetId: number;
+
+        if (vorhandeneQualitaet) {
+            qualitaetId = vorhandeneQualitaet.qualitaet_ID;
+
+            // Suche nach vorhandenem Lagerbestand mit gleicher Qualität
+            const bestand = await prisma.lagerbestand.findFirst({
+                where: {
+                    material_ID: artikelnummer,
+                    lager_ID: rohLager.lager_ID,
+                    qualitaet_ID: qualitaetId,
+                },
+            });
+
+            if (bestand) {
+                // Menge erhöhen
+                await prisma.lagerbestand.update({
+                    where: { lagerbestand_ID: bestand.lagerbestand_ID },
+                    data: { menge: bestand.menge + menge },
+                });
+
+                return reply.send({ status: 'aktualisiert', lagerbestand_ID: bestand.lagerbestand_ID });
+            }
+        } else {
+            // Neue Qualität anlegen
+            const neueQualitaet = await prisma.qualitaet.create({
+                data: qualitaet,
+            });
+
+            qualitaetId = neueQualitaet.qualitaet_ID;
+        }
+
+        // Fiktiven Wareneingang erzeugen
+        const wareneingang = await prisma.wareneingang.create({
+            data: {
+                material_ID: artikelnummer,
+                materialbestellung_ID: 1, // Falls Pflicht, Dummy-ID oder Optionalität prüfen
+                menge,
+                status: 'zurückgegeben',
+                lieferdatum: new Date(),
+            },
+        });
+
+        // Neuen Lagerbestand anlegen
+        const neuerBestand = await prisma.lagerbestand.create({
+            data: {
+                eingang_ID: wareneingang.eingang_ID,
+                lager_ID: rohLager.lager_ID,
+                material_ID: artikelnummer,
+                menge,
+                qualitaet_ID: qualitaetId,
+            },
+        });
+
+        return reply.send({ status: 'neu eingelagert', lagerbestand_ID: neuerBestand.lagerbestand_ID });
+    } catch (error) {
+        console.error('Fehler beim Einlagern von zurückgegebenem Rohmaterial:', error);
+        return reply.status(500).send({ error: 'Fehler bei der Rückgabe' });
+    }
+};
