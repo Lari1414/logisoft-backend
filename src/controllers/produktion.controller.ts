@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
@@ -336,5 +337,86 @@ export const rohmaterialZurueckgeben = async (
     } catch (error) {
         console.error('Fehler beim Einlagern von zurückgegebenem Rohmaterial:', error);
         return reply.status(500).send({ error: 'Fehler bei der Rückgabe' });
+    }
+};
+
+export const fertigmaterialAnliefern = async (
+    req: FastifyRequest<{
+        Body: {
+            bestellposition: string;
+            artikelnummer: number;
+            url: string;
+            menge: number;
+        };
+    }>,
+    reply: FastifyReply
+) => {
+    const { bestellposition, artikelnummer, url, menge } = req.body;
+
+    try {
+        // 1. Lager-ID für Fertigmaterial suchen
+        const fertigLager = await prisma.lager.findFirst({
+            where: { bezeichnung: 'Fertigmateriallager' },
+        });
+
+        if (!fertigLager) {
+            return reply.status(500).send({ error: 'Fertigmateriallager nicht gefunden' });
+        }
+
+        // 2. Material suchen oder erstellen
+        let material = await prisma.material.findFirst({
+            where: { material_ID: artikelnummer },
+        });
+
+        if (!material) {
+            // Material existiert nicht, also neu anlegen
+            material = await prisma.material.create({
+                data: {
+                    material_ID: artikelnummer,
+                    url,
+                    lager_ID: fertigLager.lager_ID,
+                },
+            });
+        }
+
+        // 3. Lagerbestand erhöhen oder anlegen
+        const vorhandenerBestand = await prisma.lagerbestand.findFirst({
+            where: {
+                material_ID: material.material_ID,
+                lager_ID: fertigLager.lager_ID,
+            },
+        });
+
+        if (vorhandenerBestand) {
+            // Menge erhöhen
+            await prisma.lagerbestand.update({
+                where: { lagerbestand_ID: vorhandenerBestand.lagerbestand_ID },
+                data: { menge: vorhandenerBestand.menge + menge },
+            });
+        } else {
+            // Neuen Bestand anlegen
+            await prisma.lagerbestand.create({
+                data: {
+                    material_ID: material.material_ID,
+                    lager_ID: fertigLager.lager_ID,
+                    menge,
+                    eingang_ID: 1, // Dummy ID oder echten Bezug verwenden
+                },
+            });
+        }
+
+        // 4. Temporäre Daten weitergeben
+        const weitergabePayload = {
+            bestellposition,
+            status: 'abholbereit',
+        };
+
+        // await axios.post('http://verkauf-versand-service/api/status', weitergabePayload);
+
+        return reply.send({ status: 'eingelagert & weitergegeben' });
+
+    } catch (error) {
+        console.error('Fehler bei Einlagerung:', error);
+        return reply.status(500).send({ error: 'Einlagerung fehlgeschlagen' });
     }
 };
