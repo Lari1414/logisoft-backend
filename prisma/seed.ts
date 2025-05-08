@@ -9,8 +9,8 @@ async function main() {
   await prisma.lagerbestand.deleteMany();
   await prisma.wareneingang.deleteMany();
   await prisma.materialbestellung.deleteMany();
-  await prisma.material.deleteMany();
   await prisma.mindestbestand.deleteMany();
+  await prisma.material.deleteMany();
 
   // Lösche Lieferanten zuerst, weil sie auf Adressen verweisen
   await prisma.lieferant.deleteMany();
@@ -162,12 +162,18 @@ async function main() {
     });
 
     // **Füge Mindestbestand für jedes Material hinzu**
-    await prisma.mindestbestand.create({
-      data: {
-        material_ID: mat.material_ID,
-        mindestbestand: faker.number.int({ min: 5, max: 20 }),
-      },
+    const existing = await prisma.mindestbestand.findUnique({
+      where: { material_ID: mat.material_ID },
     });
+
+    if (!existing) {
+      await prisma.mindestbestand.create({
+        data: {
+          material_ID: mat.material_ID,
+          mindestbestand: faker.number.int({ min: 5, max: 20 }),
+        },
+      });
+    }
   }
 
   // 9. Materialbestellungen, Wareneingänge, Lagerbestand für Rohmaterial
