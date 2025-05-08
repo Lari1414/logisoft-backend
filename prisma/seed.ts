@@ -1,4 +1,3 @@
-import { nullable } from 'zod';
 import { PrismaClient } from '../generated/prisma';
 import { faker } from '@faker-js/faker';
 
@@ -6,8 +5,23 @@ const prisma = new PrismaClient();
 faker.seed(123); // für konsistente Ergebnisse
 
 async function main() {
-  // 1. Erstelle Lager 1 (Rohmateriallager) und Lager 2 (Fertigmateriallager)
+  // 1. Lösche alle bestehenden Daten (mit Sicherstellung, dass keine Foreign Key-Fehler auftreten)
+  await prisma.lagerbestand.deleteMany();
+  await prisma.wareneingang.deleteMany();
+  await prisma.materialbestellung.deleteMany();
+  await prisma.material.deleteMany();
+  await prisma.mindestbestand.deleteMany();
+
+  // Lösche Lieferanten zuerst, weil sie auf Adressen verweisen
+  await prisma.lieferant.deleteMany();
+
+  // Lösche Adressen, nachdem alle Lieferanten gelöscht wurden
+  await prisma.adresse.deleteMany();
+
+  // Lösche Lager
   await prisma.lager.deleteMany();
+
+  // 2. Erstelle Lager 1 (Rohmateriallager) und Lager 2 (Fertigmateriallager)
   let rohmaterialLager = await prisma.lager.findUnique({
     where: { lager_ID: 1 },
   });
@@ -34,7 +48,7 @@ async function main() {
     });
   }
 
-  // 2. Erzeuge 3 Adressen
+  // 3. Erzeuge 3 Adressen
   const adressen = await Promise.all(
     Array.from({ length: 3 }).map(() =>
       prisma.adresse.create({
@@ -47,7 +61,7 @@ async function main() {
     )
   );
 
-  // 3. Erzeuge 3 Lieferanten mit Adresse
+  // 4. Erzeuge 3 Lieferanten mit Adresse
   const lieferanten = await Promise.all(
     adressen.map((adresse) =>
       prisma.lieferant.create({
@@ -60,7 +74,7 @@ async function main() {
     )
   );
 
-  // 4. Erzeuge 5 Materialien mit festen Typen und Kategorie "T-Shirt"
+  // 5. Erzeuge 5 Materialien mit festen Typen und Kategorie "T-Shirt"
   const typVarianten = ['V-Ausschnitt', 'Oversize', 'Top', 'Sport', 'Rundhals'];
   const materialien = await Promise.all(
     Array.from({ length: 5 }).map(() =>
@@ -77,7 +91,7 @@ async function main() {
     )
   );
 
-  // 4. Erzeuge 3 Rohmaterialien
+  // 6. Erzeuge 3 Rohmaterialien
   const categorys = ['Verpackung', 'Farbe', 'Druckfolie'];
   const rohmaterialien = await Promise.all(
     Array.from({ length: 3 }).map(() =>
@@ -86,15 +100,15 @@ async function main() {
           lager_ID: rohmaterialLager.lager_ID,
           category: faker.helpers.arrayElement(categorys),
           farbe: faker.color.human(),
-          typ: null,
-          groesse: null,
-          url: null,
+          typ: null,  // Typ bleibt null für Rohmaterialien
+          groesse: null,  // Größe bleibt null
+          url: null,  // URL bleibt null
         },
       })
     )
   );
 
-  // 5. Erzeuge Qualitäten
+  // 7. Erzeuge Qualitäten
   const qualitaeten = await Promise.all(
     Array.from({ length: 3 }).map(() =>
       prisma.qualitaet.create({
@@ -109,7 +123,7 @@ async function main() {
     )
   );
 
-  // 6. Materialbestellungen, Wareneingänge, Lagerbestand
+  // 8. Materialbestellungen, Wareneingänge, Lagerbestand
   for (let i = 0; i < 5; i++) {
     const mat = faker.helpers.arrayElement(materialien);
     const lieferant = faker.helpers.arrayElement(lieferanten);
@@ -133,18 +147,30 @@ async function main() {
       },
     });
 
+    // Überprüfe, ob `qualitaet_ID` gesetzt werden kann (bei Materialien mit Qualität)
+    const qualitaetID = mat.category === 'T-Shirt' ? quali.qualitaet_ID : null;
+
+    // Überprüfen, ob `qualitaet_ID` NULL sein kann und es sicher setzen
     await prisma.lagerbestand.create({
       data: {
         eingang_ID: eingang.eingang_ID,
         lager_ID: mat.lager_ID,
         material_ID: mat.material_ID,
         menge: eingang.menge,
-        qualitaet_ID: quali.qualitaet_ID,
+        qualitaet_ID: qualitaetID !== null ? qualitaetID : null,  // Überprüfe und setze NULL, wenn nicht benötigt
+      },
+    });
+
+    // **Füge Mindestbestand für jedes Material hinzu**
+    await prisma.mindestbestand.create({
+      data: {
+        material_ID: mat.material_ID,
+        mindestbestand: faker.number.int({ min: 5, max: 20 }),
       },
     });
   }
 
-  // 6. Materialbestellungen, Wareneingänge, Lagerbestand für Rohmaterial
+  // 9. Materialbestellungen, Wareneingänge, Lagerbestand für Rohmaterial
   for (let i = 0; i < 3; i++) {
     const rohmat = faker.helpers.arrayElement(rohmaterialien);
     const rohmatlieferant = faker.helpers.arrayElement(lieferanten);
@@ -168,6 +194,7 @@ async function main() {
       },
     });
 
+    // Rohmaterial benötigt keine Qualitaet_ID, also setze es auf NULL
     await prisma.lagerbestand.create({
       data: {
         eingang_ID: rohmateingang.eingang_ID,
@@ -177,24 +204,22 @@ async function main() {
         qualitaet_ID: rohmatquali.qualitaet_ID,
       },
     });
-  }
 
-  // 7. Mindestbestand einmalig pro Material
-  for (const mat of materialien) {
+    // **Füge Mindestbestand für Rohmaterial hinzu**
     await prisma.mindestbestand.create({
       data: {
-        material_ID: mat.material_ID,
+        material_ID: rohmat.material_ID,
         mindestbestand: faker.number.int({ min: 5, max: 20 }),
       },
     });
   }
 
-  console.log(' Seed erfolgreich abgeschlossen');
+  console.log('Seed erfolgreich abgeschlossen');
 }
 
 main()
   .catch((e) => {
-    console.error(' Seed Fehler:', e);
+    console.error('Seed Fehler:', e);
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
