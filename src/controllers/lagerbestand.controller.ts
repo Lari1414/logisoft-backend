@@ -118,7 +118,7 @@ export const deleteLagerbestandById = async (
 export const getMaterialBestand = async (
   req: FastifyRequest<{
     Body: {
-      kategorie: string;
+      category: string;
       aufdruck: string;  // Dies ist die URL
       groesse: string;
       farbe: string;
@@ -128,12 +128,12 @@ export const getMaterialBestand = async (
   reply: FastifyReply
 ) => {
   try {
-    const { kategorie, aufdruck, groesse, farbe, typ } = req.body;
+    const {category, aufdruck, groesse, farbe, typ } = req.body;
 
     // 1. Suche das passende Material in der Materialtabelle
     let material = await prisma.material.findFirst({
       where: {
-        category: kategorie,
+        category: category,
         url: aufdruck,
         groesse: groesse,
         farbe: farbe,
@@ -143,17 +143,20 @@ export const getMaterialBestand = async (
 
     // Wenn kein Material gefunden wurde, erstellen wir einen neuen Eintrag
     if (!material) {
+      const istUrlGueltig = typeof aufdruck === 'string' && aufdruck.trim() !== '';
+
       material = await prisma.material.create({
         data: {
-          lager_ID:1,
-          category: kategorie,
-          url: aufdruck,
+          lager_ID: istUrlGueltig ? 2 : 1,
+          category: category,
+          url: istUrlGueltig ? aufdruck : null,
           groesse: groesse,
           farbe: farbe,
           typ: typ,
         },
       });
     }
+
 
     // 2. Berechne die Gesamtmenge des Materials im Lagerbestand
     const bestand = await prisma.lagerbestand.aggregate({
