@@ -47,6 +47,54 @@ export const getAllMaterials = async (req: FastifyRequest, reply: FastifyReply) 
   }
 };
 
+// GET : Nur Rohmaterial anzeigen
+export const getRawMaterials = async (req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const rohLager = await prisma.lager.findFirst({
+      where: { bezeichnung: 'Rohmateriallager' },
+    });
+
+    if (!rohLager) {
+      return reply.status(500).send({ error: 'Rohmateriallager nicht gefunden' });
+    }
+
+    const materials = await prisma.material.findMany({
+      where: {
+        lager_ID: rohLager.lager_ID,
+      },
+    });
+
+    return reply.send(materials);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Rohmaterialien' });
+  }
+};
+
+// GET : Nur Fertmaterial anzeigen
+export const getFinishedMaterials = async (req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const fertigLager = await prisma.lager.findFirst({
+      where: { bezeichnung: 'Fertigmateriallager' },
+    });
+
+    if (!fertigLager) {
+      return reply.status(500).send({ error: 'Fertigmateriallager nicht gefunden' });
+    }
+
+    const materials = await prisma.material.findMany({
+      where: {
+        lager_ID: fertigLager.lager_ID,
+      },
+    });
+
+    return reply.send(materials);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Fertigmaterialien' });
+  }
+};
+
 // GET: Einzelnes Material abrufen
 export const getMaterialById = async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   try {
@@ -78,7 +126,7 @@ export const updateMaterialById = async (req: FastifyRequest<{ Params: { id: str
     });
 
     return reply.send(updated);
-  } catch (error:any) {
+  } catch (error: any) {
     console.error(error);
 
     if (error.code === 'P2025') {
@@ -99,7 +147,7 @@ export const deleteMaterialById = async (req: FastifyRequest<{ Params: { id: str
     });
 
     return reply.status(204).send();
-  } catch (error:any) {
+  } catch (error: any) {
     console.error(error);
 
     if (error.code === 'P2025') {
