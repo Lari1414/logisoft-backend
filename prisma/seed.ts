@@ -148,6 +148,7 @@ async function main() {
   for (let i = 0; i < 3; i++) {
     const rohmat = faker.helpers.arrayElement(rohmaterialien);
     const rohmatlieferant = faker.helpers.arrayElement(lieferanten);
+    const rohmatquali = faker.helpers.arrayElement(qualitaeten);
 
     const rohmatbestellung = await prisma.materialbestellung.create({
       data: {
@@ -172,7 +173,8 @@ async function main() {
         eingang_ID: rohmateingang.eingang_ID,
         lager_ID: rohmat.lager_ID,
         material_ID: rohmat.material_ID,
-        menge: rohmateingang.menge
+        menge: rohmateingang.menge,
+        qualitaet_ID: rohmatquali.qualitaet_ID,
       },
     });
   }
