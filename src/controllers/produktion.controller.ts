@@ -44,17 +44,45 @@ export const produktionBestelltMaterial = async (
                 continue;
             }
 
+            // Holen der Lagerbestände, die noch nicht reserviert sind
             const lagerbestaende = await prisma.lagerbestand.findMany({
                 where: { material_ID: Artikelnummer },
                 orderBy: { eingang_ID: 'asc' },
             });
 
-            const gesamtMenge = lagerbestaende.reduce((sum, b) => sum + b.menge, 0);
+            // Berechnen der Gesamtmenge des verfügbaren Materials
+            let reserviert = 0;
+            const bereitsReservierteAuftraege = await prisma.auftrag.findMany({
+                where: {
+                    material_ID: Artikelnummer,
+                    status: 'Auslagerung angefordert',
+                },
+                select: {
+                    menge: true,
+                    lagerbestand_ID: true,
+                },
+            });
 
-            if (gesamtMenge < Anzahl) {
+            // Berechnung der insgesamt bereits reservierten Menge pro Lagerbestand
+            const reservierteMengen = bereitsReservierteAuftraege.reduce((acc, auftrag) => {
+                if (!acc[auftrag.lagerbestand_ID]) {
+                    acc[auftrag.lagerbestand_ID] = 0;
+                }
+                acc[auftrag.lagerbestand_ID] += auftrag.menge;
+                return acc;
+            }, {} as Record<number, number>);
+
+            // Berechnung des noch verfügbaren Bestands
+            const gesamtMengeVerfuegbar = lagerbestaende.reduce((sum, bestand) => {
+                const bereitsReserviert = reservierteMengen[bestand.lagerbestand_ID] || 0;
+                const verfuegbar = bestand.menge - bereitsReserviert;
+                return sum + Math.max(verfuegbar, 0); // Keine negativen Bestände erlauben
+            }, 0);
+
+            if (gesamtMengeVerfuegbar < Anzahl) {
                 result.push({
                     Artikelnummer,
-                    Fehler: 'Nicht genügend Rohmaterial vorhanden',
+                    Fehler: 'Nicht genügend Rohmaterial verfügbar',
                 });
                 continue;
             }
@@ -62,29 +90,34 @@ export const produktionBestelltMaterial = async (
             let verbleibend = Anzahl;
             const angelegteAuftraege = [];
 
+            // Reservieren des Bestands
             for (const bestand of lagerbestaende) {
                 if (verbleibend <= 0) break;
 
-                const menge = Math.min(bestand.menge, verbleibend);
+                const bereitsReserviert = reservierteMengen[bestand.lagerbestand_ID] || 0;
+                const verfuegbar = bestand.menge - bereitsReserviert;
+                const entnahme = Math.min(verfuegbar, verbleibend);
 
-                const auftrag = await prisma.auftrag.create({
-                    data: {
-                        lager_ID: bestand.lager_ID,
-                        material_ID: Artikelnummer,
-                        menge: menge,
-                        status: 'Auslagerung angefordert',
+                if (entnahme > 0) {
+                    const auftrag = await prisma.auftrag.create({
+                        data: {
+                            lager_ID: bestand.lager_ID,
+                            material_ID: Artikelnummer,
+                            menge: entnahme,
+                            status: 'Auslagerung angefordert',
+                            lagerbestand_ID: bestand.lagerbestand_ID,
+                            bestellposition: Bestellposition,
+                        },
+                    });
+
+                    angelegteAuftraege.push({
+                        auftrag_ID: auftrag.auftrag_ID,
                         lagerbestand_ID: bestand.lagerbestand_ID,
-                        bestellposition: Bestellposition
-                    },
-                });
+                        menge: entnahme,
+                    });
 
-                angelegteAuftraege.push({
-                    auftrag_ID: auftrag.auftrag_ID,
-                    lagerbestand_ID: bestand.lagerbestand_ID,
-                    menge: menge,
-                });
-
-                verbleibend -= menge;
+                    verbleibend -= entnahme;
+                }
             }
 
             result.push({
@@ -94,12 +127,14 @@ export const produktionBestelltMaterial = async (
             });
         }
 
-        return reply.send(result);
+        // Wenn alles erfolgreich war, Status 200 zurückgeben
+        return reply.status(200);
     } catch (error) {
         console.error('Fehler bei Bestellverarbeitung:', error);
         return reply.status(500).send({ error: 'Interner Serverfehler bei Bestellverarbeitung' });
     }
 };
+
 
 export const rohmaterialAbfragen = async (
     req: FastifyRequest<{
