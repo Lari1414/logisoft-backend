@@ -157,7 +157,7 @@ async function main() {
         lager_ID: mat.lager_ID,
         material_ID: mat.material_ID,
         menge: eingang.menge,
-        qualitaet_ID: qualitaetID !== null ? qualitaetID : null,  // Überprüfe und setze NULL, wenn nicht benötigt
+        qualitaet_ID: quali.qualitaet_ID  // Überprüfe und setze NULL, wenn nicht benötigt
       },
     });
 
