@@ -7,7 +7,7 @@ import {
 export default async function produktionRouten(app: FastifyInstance) {
   app.post('/material/bestellen', produktionBestelltMaterial);
   app.post('/rohmaterial/abfragen', rohmaterialAbfragen);
-  app.get('/fertigmaterial/abfragen/:artikelnummer', fertigmaterialAbfragen);
+  app.post('/fertigmaterial/abfragen', fertigmaterialAbfragen);
   app.post('/rohmaterial/bereitstellen', rohmaterialBereitstellen);
   app.post('/rohmaterial/zurueckgeben', rohmaterialZurueckgeben);
   app.post('/fertigmaterial/anliefern', fertigmaterialAnliefern);
