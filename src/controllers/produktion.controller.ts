@@ -44,13 +44,11 @@ export const produktionBestelltMaterial = async (
                 continue;
             }
 
-            // Holen der Lagerbestände, die noch nicht reserviert sind
             const lagerbestaende = await prisma.lagerbestand.findMany({
                 where: { material_ID: Artikelnummer },
                 orderBy: { eingang_ID: 'asc' },
             });
 
-            // Berechnen der Gesamtmenge des verfügbaren Materials
             let reserviert = 0;
             const bereitsReservierteAuftraege = await prisma.auftrag.findMany({
                 where: {
@@ -63,7 +61,6 @@ export const produktionBestelltMaterial = async (
                 },
             });
 
-            // Berechnung der insgesamt bereits reservierten Menge pro Lagerbestand
             const reservierteMengen = bereitsReservierteAuftraege.reduce((acc, auftrag) => {
                 if (!acc[auftrag.lagerbestand_ID]) {
                     acc[auftrag.lagerbestand_ID] = 0;
@@ -72,11 +69,10 @@ export const produktionBestelltMaterial = async (
                 return acc;
             }, {} as Record<number, number>);
 
-            // Berechnung des noch verfügbaren Bestands
             const gesamtMengeVerfuegbar = lagerbestaende.reduce((sum, bestand) => {
                 const bereitsReserviert = reservierteMengen[bestand.lagerbestand_ID] || 0;
                 const verfuegbar = bestand.menge - bereitsReserviert;
-                return sum + Math.max(verfuegbar, 0); // Keine negativen Bestände erlauben
+                return sum + Math.max(verfuegbar, 0);
             }, 0);
 
             if (gesamtMengeVerfuegbar < Anzahl) {
@@ -90,7 +86,6 @@ export const produktionBestelltMaterial = async (
             let verbleibend = Anzahl;
             const angelegteAuftraege = [];
 
-            // Reservieren des Bestands
             for (const bestand of lagerbestaende) {
                 if (verbleibend <= 0) break;
 
@@ -127,7 +122,6 @@ export const produktionBestelltMaterial = async (
             });
         }
 
-        // Wenn alles erfolgreich war, Status 200 zurückgeben
         return reply.status(200);
     } catch (error) {
         console.error('Fehler bei Bestellverarbeitung:', error);
@@ -536,7 +530,7 @@ export const fertigmaterialAnliefern = async (
             });
         }
 
-        return reply.send(result);
+        return reply.status(200);
     } catch (error) {
         console.error('Fehler bei der Einlagerung:', error);
         return reply.status(500).send({ error: 'Einlagerung fehlgeschlagen' });
