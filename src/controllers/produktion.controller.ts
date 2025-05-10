@@ -135,7 +135,6 @@ export const produktionBestelltMaterial = async (
     }
 };
 
-
 export const rohmaterialAbfragen = async (
     req: FastifyRequest<{
         Body: {
@@ -287,13 +286,18 @@ export const fertigmaterialAbfragen = async (
 };
 
 export const rohmaterialBereitstellen = async (
-    _req: FastifyRequest<{ Body: { bezeichnung: string; eigenschaft: string | null } }>,
+    _req: FastifyRequest<{
+        Body: { bezeichnung: string; eigenschaft: string | null }[];
+    }>,
     reply: FastifyReply
 ) => {
     try {
-        const { bezeichnung, eigenschaft } = _req.body;
+        const anfragen = _req.body;
 
-        // Finde das Rohmateriallager
+        if (!Array.isArray(anfragen)) {
+            return reply.status(400).send({ error: 'Ungültiges Anfrageformat' });
+        }
+
         const rohLager = await prisma.lager.findFirst({
             where: { bezeichnung: 'Rohmateriallager' },
         });
@@ -302,39 +306,60 @@ export const rohmaterialBereitstellen = async (
             return reply.status(500).send({ error: 'Rohmateriallager nicht gefunden' });
         }
 
-        // Finde passendes Material
-        const material = await prisma.material.findFirst({
-            where: {
-                lager_ID: rohLager.lager_ID,
-                category: bezeichnung,
-                farbe: eigenschaft ?? undefined, // wenn null, ignorieren
-            },
-        });
+        const ergebnisse = [];
 
-        if (!material) {
-            return reply.status(404).send({ error: 'Material nicht gefunden' });
+        for (const { bezeichnung, eigenschaft } of anfragen) {
+            const material = await prisma.material.findFirst({
+                where: {
+                    lager_ID: rohLager.lager_ID,
+                    category: bezeichnung,
+                    farbe: eigenschaft ?? undefined,
+                },
+            });
+
+            if (!material) {
+                ergebnisse.push({
+                    bezeichnung,
+                    eigenschaft,
+                    status: 'Material nicht gefunden',
+                });
+                continue;
+            }
+
+            const lagerbestand = await prisma.lagerbestand.findFirst({
+                where: {
+                    lager_ID: rohLager.lager_ID,
+                    material_ID: material.material_ID,
+                    menge: { gt: 0 },
+                },
+                include: {
+                    qualitaet: true,
+                },
+            });
+
+            if (!lagerbestand) {
+                ergebnisse.push({
+                    bezeichnung,
+                    eigenschaft,
+                    status: 'Kein ausreichender Bestand vorhanden',
+                });
+                continue;
+            }
+
+            await prisma.lagerbestand.update({
+                where: { lagerbestand_ID: lagerbestand.lagerbestand_ID },
+                data: { menge: { decrement: 1 } },
+            });
+
+            ergebnisse.push({
+                bezeichnung,
+                eigenschaft,
+                status: 'bereitgestellt',
+                qualitaet: lagerbestand.qualitaet,
+            });
         }
 
-        // Finde passenden Lagerbestand mit Menge > 0
-        const lagerbestand = await prisma.lagerbestand.findFirst({
-            where: {
-                lager_ID: rohLager.lager_ID,
-                material_ID: material.material_ID,
-                menge: { gt: 0 },
-            },
-        });
-
-        if (!lagerbestand) {
-            return reply.status(400).send({ error: 'Kein ausreichender Bestand vorhanden' });
-        }
-
-        // Menge um 1 reduzieren
-        await prisma.lagerbestand.update({
-            where: { lagerbestand_ID: lagerbestand.lagerbestand_ID },
-            data: { menge: { decrement: 1 } },
-        });
-
-        return reply.send({ status: 'bereitgestellt' });
+        return reply.send(ergebnisse);
     } catch (error) {
         console.error('Fehler beim Bereitstellen von Rohmaterial:', error);
         return reply.status(500).send({ error: 'Interner Serverfehler' });
@@ -353,18 +378,13 @@ export const rohmaterialZurueckgeben = async (
                 saugfaehigkeit?: number | null;
                 weissgrad?: number | null;
             };
-        };
+        }[];
     }>,
     reply: FastifyReply
 ) => {
     try {
-        const { artikelnummer, menge, qualitaet } = req.body;
+        const rueckgaben = req.body;
 
-        if (!artikelnummer || !menge || menge <= 0) {
-            return reply.status(400).send({ error: 'Ungültige Daten' });
-        }
-
-        // Rohmateriallager-ID ermitteln
         const rohLager = await prisma.lager.findFirst({
             where: { bezeichnung: 'Rohmateriallager' },
         });
@@ -373,18 +393,36 @@ export const rohmaterialZurueckgeben = async (
             return reply.status(500).send({ error: 'Rohmateriallager nicht gefunden' });
         }
 
-        // Suche nach vorhandener Qualität
-        const vorhandeneQualitaet = await prisma.qualitaet.findFirst({
-            where: qualitaet,
-        });
+        const result = [];
 
-        let qualitaetId: number;
+        for (const rueckgabe of rueckgaben) {
+            const { artikelnummer, menge, qualitaet } = rueckgabe;
 
-        if (vorhandeneQualitaet) {
-            qualitaetId = vorhandeneQualitaet.qualitaet_ID;
+            if (!artikelnummer || !menge || menge <= 0) {
+                result.push({ artikelnummer, error: 'Ungültige Daten' });
+                continue;
+            }
 
-            // Suche nach vorhandenem Lagerbestand mit gleicher Qualität
-            const bestand = await prisma.lagerbestand.findFirst({
+            const qualitaetFilter = Object.fromEntries(
+                Object.entries(qualitaet).filter(([_, v]) => v != null)
+            );
+
+            let vorhandeneQualitaet = await prisma.qualitaet.findFirst({
+                where: qualitaetFilter,
+            });
+
+            let qualitaetId: number;
+
+            if (vorhandeneQualitaet) {
+                qualitaetId = vorhandeneQualitaet.qualitaet_ID;
+            } else {
+                const neueQualitaet = await prisma.qualitaet.create({
+                    data: qualitaetFilter,
+                });
+                qualitaetId = neueQualitaet.qualitaet_ID;
+            }
+
+            let lagerbestand = await prisma.lagerbestand.findFirst({
                 where: {
                     material_ID: artikelnummer,
                     lager_ID: rohLager.lager_ID,
@@ -392,49 +430,37 @@ export const rohmaterialZurueckgeben = async (
                 },
             });
 
-            if (bestand) {
-                // Menge erhöhen
-                await prisma.lagerbestand.update({
-                    where: { lagerbestand_ID: bestand.lagerbestand_ID },
-                    data: { menge: bestand.menge + menge },
+            if (!lagerbestand) {
+                lagerbestand = await prisma.lagerbestand.create({
+                    data: {
+                        material_ID: artikelnummer,
+                        lager_ID: rohLager.lager_ID,
+                        menge: 0,
+                        qualitaet_ID: qualitaetId,
+                    },
                 });
-
-                return reply.send({ status: 'aktualisiert', lagerbestand_ID: bestand.lagerbestand_ID });
             }
-        } else {
-            // Neue Qualität anlegen
-            const neueQualitaet = await prisma.qualitaet.create({
-                data: qualitaet,
+
+            const neuerAuftrag = await prisma.auftrag.create({
+                data: {
+                    material_ID: artikelnummer,
+                    lager_ID: rohLager.lager_ID,
+                    menge,
+                    status: 'Einlagerung angefordert',
+                    lagerbestand_ID: lagerbestand.lagerbestand_ID,
+                },
             });
 
-            qualitaetId = neueQualitaet.qualitaet_ID;
+            result.push({
+                artikelnummer,
+                status: 'Einlagerung angefordert',
+                auftrag_ID: neuerAuftrag.auftrag_ID,
+            });
         }
 
-        // Fiktiven Wareneingang erzeugen
-        const wareneingang = await prisma.wareneingang.create({
-            data: {
-                material_ID: artikelnummer,
-                materialbestellung_ID: 1, // Falls Pflicht, Dummy-ID oder Optionalität prüfen
-                menge,
-                status: 'zurückgegeben',
-                lieferdatum: new Date(),
-            },
-        });
-
-        // Neuen Lagerbestand anlegen
-        const neuerBestand = await prisma.lagerbestand.create({
-            data: {
-                eingang_ID: wareneingang.eingang_ID,
-                lager_ID: rohLager.lager_ID,
-                material_ID: artikelnummer,
-                menge,
-                qualitaet_ID: qualitaetId,
-            },
-        });
-
-        return reply.send({ status: 'neu eingelagert', lagerbestand_ID: neuerBestand.lagerbestand_ID });
+        return reply.send(result);
     } catch (error) {
-        console.error('Fehler beim Einlagern von zurückgegebenem Rohmaterial:', error);
+        console.error('Fehler beim Zurückgeben von Rohmaterial:', error);
         return reply.status(500).send({ error: 'Fehler bei der Rückgabe' });
     }
 };
@@ -446,14 +472,13 @@ export const fertigmaterialAnliefern = async (
             artikelnummer: number;
             url: string;
             menge: number;
-        };
+        }[];
     }>,
     reply: FastifyReply
 ) => {
-    const { bestellposition, artikelnummer, url, menge } = req.body;
+    const rueckgaben = req.body;
 
     try {
-        // 1. Lager-ID für Fertigmaterial suchen
         const fertigLager = await prisma.lager.findFirst({
             where: { bezeichnung: 'Fertigmateriallager' },
         });
@@ -462,61 +487,58 @@ export const fertigmaterialAnliefern = async (
             return reply.status(500).send({ error: 'Fertigmateriallager nicht gefunden' });
         }
 
-        // 2. Material suchen oder erstellen
-        let material = await prisma.material.findFirst({
-            where: { material_ID: artikelnummer },
-        });
+        const result = [];
 
-        if (!material) {
-            // Material existiert nicht, also neu anlegen
-            material = await prisma.material.create({
-                data: {
+        for (const rueckgabe of rueckgaben) {
+            const { bestellposition, artikelnummer, url, menge } = rueckgabe;
+
+            let material = await prisma.material.findFirst({
+                where: {
                     material_ID: artikelnummer,
                     url,
+                },
+            });
+
+            if (!material) {
+                return reply.status(500).send({ error: 'Material nicht gefunden: Einlagerung fehlgeschlagen' });
+            }
+
+            const vorhandenerBestand = await prisma.lagerbestand.findFirst({
+                where: {
+                    material_ID: material.material_ID,
                     lager_ID: fertigLager.lager_ID,
                 },
             });
-        }
 
-        // 3. Lagerbestand erhöhen oder anlegen
-        const vorhandenerBestand = await prisma.lagerbestand.findFirst({
-            where: {
-                material_ID: material.material_ID,
-                lager_ID: fertigLager.lager_ID,
-            },
-        });
+            let lagerbestandId: number;
 
-        if (vorhandenerBestand) {
-            // Menge erhöhen
-            await prisma.lagerbestand.update({
-                where: { lagerbestand_ID: vorhandenerBestand.lagerbestand_ID },
-                data: { menge: vorhandenerBestand.menge + menge },
-            });
-        } else {
-            // Neuen Bestand anlegen
-            await prisma.lagerbestand.create({
+            if (!vorhandenerBestand) {
+                return reply.status(500).send({ error: 'Lagerbestand nicht gefunden: Einlagerung fehlgeschlagen' });
+            } else {
+                lagerbestandId = vorhandenerBestand.lagerbestand_ID;
+            }
+
+            const neuerAuftrag = await prisma.auftrag.create({
                 data: {
+                    bestellposition,
                     material_ID: material.material_ID,
                     lager_ID: fertigLager.lager_ID,
                     menge,
-                    eingang_ID: 1,
-                    qualitaet_ID: 1, // Dummy ID oder echten Bezug verwenden
+                    status: 'Einlagerung angefordert',
+                    lagerbestand_ID: lagerbestandId,
                 },
+            });
+
+            result.push({
+                artikelnummer,
+                status: 'Einlagerung angefordert',
+                auftrag_ID: neuerAuftrag.auftrag_ID,
             });
         }
 
-        // 4. Temporäre Daten weitergeben
-        const weitergabePayload = {
-            bestellposition,
-            status: 'abholbereit',
-        };
-
-        // await axios.post('http://verkauf-versand-service/api/status', weitergabePayload);
-
-        return reply.send({ status: 'eingelagert & weitergegeben' });
-
+        return reply.send(result);
     } catch (error) {
-        console.error('Fehler bei Einlagerung:', error);
+        console.error('Fehler bei der Einlagerung:', error);
         return reply.status(500).send({ error: 'Einlagerung fehlgeschlagen' });
     }
 };
