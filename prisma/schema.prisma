@@ -18,7 +18,7 @@ model Material {
   url         String?
 
   lager          Lager                @relation(fields: [lager_ID], references: [lager_ID])
-  eingaenge     Wareneingang[]
+  eingaenge      Wareneingang[]
   bestellungen   Materialbestellung[]
   lagerbestaende Lagerbestand[]
   mindestbestand Mindestbestand?
@@ -117,7 +117,7 @@ model Auftrag {
   material_ID   Int
   menge         Int
   status        String
-  lagerbestand_ID  Int 
+  lagerbestand_ID  Int
   bestellposition   String?
 
   lager Lager @relation("LagerToAuftrag", fields: [lager_ID], references: [lager_ID])

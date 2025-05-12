@@ -6,7 +6,8 @@ import {
   getLagerbestandById,
   updateLagerbestandById,
   deleteLagerbestandById,
-
+  auslagernMaterial,
+  einlagernMaterial
 } from '../controllers/lagerbestand.controller'
 
 export default async function lagerbestandRoutes(app: FastifyInstance) {
@@ -24,5 +25,10 @@ export default async function lagerbestandRoutes(app: FastifyInstance) {
 
   // DELETE: Lagerbestand löschen
   app.delete('/:id', deleteLagerbestandById);
+
+  //POST: Auslagern
+  app.post('/auslagern',auslagernMaterial);
+  //POST: Einlagern
+  app.post('/einlagern',einlagernMaterial);
 
 }

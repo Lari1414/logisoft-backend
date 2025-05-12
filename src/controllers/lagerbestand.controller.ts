@@ -115,3 +115,146 @@ export const deleteLagerbestandById = async (
   }
 };
 
+// POST: Material auslagern
+export const auslagernMaterial = async (
+  req: FastifyRequest<{ Body: { material_ID: number; menge: number } }>,
+  reply: FastifyReply
+) => {
+  try {
+    const { material_ID, menge } = req.body;
+
+    // Zuerst alle Einträge im Lagerbestand mit dieser material_ID abrufen
+    const lagerbestände = await prisma.lagerbestand.findMany({
+      where: { material_ID },
+    });
+
+    // Die gesamt Menge des Materials im Lagerbestand berechnen
+    const gesamtBestand = lagerbestände.reduce((sum, bestand) => sum + bestand.menge, 0);
+
+    // Überprüfen, ob genug Bestand vorhanden ist
+    if (gesamtBestand < menge) {
+      return reply.status(400).send({ error: 'Nicht genügend Material im Lager' });
+    }
+
+    let verbleibendeMenge = menge;
+
+    // Lagerbestände in Reihenfolge abarbeiten und die Menge reduzieren
+    for (const bestand of lagerbestände) {
+      if (verbleibendeMenge === 0) break;
+
+      if (bestand.menge >= verbleibendeMenge) {
+        // Wenn der aktuelle Eintrag die verbleibende Menge decken kann
+        await prisma.lagerbestand.update({
+          where: { lagerbestand_ID: bestand.lagerbestand_ID },
+          data: { menge: bestand.menge - verbleibendeMenge },
+        });
+        verbleibendeMenge = 0;
+      } else {
+        // Wenn der aktuelle Eintrag nicht genug Bestand hat
+        await prisma.lagerbestand.update({
+          where: { lagerbestand_ID: bestand.lagerbestand_ID },
+          data: { menge: 0 },
+        });
+        verbleibendeMenge -= bestand.menge;
+      }
+    }
+
+    return reply.status(200).send({ message: 'Material erfolgreich ausgelagert' });
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Auslagern des Materials' });
+  }
+};
+export const einlagernMaterial = async (
+  req: FastifyRequest<{
+    Body: {
+      eingang_ID: number;
+      lager_ID: number;
+      menge: number;
+      qualitaet_ID: number;
+      category: string;
+      farbe: string;
+      typ: string;
+      groesse: string;
+      url?: string;
+    };
+  }>,
+  reply: FastifyReply
+) => {
+  try {
+    const {
+      eingang_ID,
+      lager_ID,
+      menge,
+      qualitaet_ID,
+      category,
+      farbe,
+      typ,
+      groesse,
+      url
+    } = req.body;
+
+    // Schritt 1: Existierendes Material suchen oder neues Material anlegen
+    let material = await prisma.material.findFirst({
+      where: {
+        lager_ID,
+        category,
+        farbe,
+        typ,
+        groesse
+      }
+    });
+
+    // Falls kein Material gefunden wird, neues Material anlegen
+    if (!material) {
+      material = await prisma.material.create({
+        data: {
+          lager_ID,
+          category,
+          farbe,
+          typ,
+          groesse,
+          url
+        }
+      });
+    }
+
+    // Schritt 2: Lagerbestand prüfen
+    const vorhandenerBestand = await prisma.lagerbestand.findFirst({
+      where: {
+        material_ID: material.material_ID,
+        lager_ID,
+        qualitaet_ID
+      }
+    });
+
+    if (vorhandenerBestand) {
+      // Menge erhöhen, wenn der Bestand existiert
+      const aktualisiert = await prisma.lagerbestand.update({
+        where: { lagerbestand_ID: vorhandenerBestand.lagerbestand_ID },
+        data: {
+          menge: vorhandenerBestand.menge + menge
+        }
+      });
+
+      return reply.status(200).send(aktualisiert);
+    } else {
+      // Neuen Lagerbestand anlegen
+      const neuerEintrag = await prisma.lagerbestand.create({
+        data: {
+          eingang_ID,
+          lager_ID,
+          material_ID: material.material_ID, // Material ID muss korrekt gesetzt werden
+          menge,
+          qualitaet_ID
+        }
+      });
+
+      return reply.status(201).send(neuerEintrag);
+    }
+
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Einlagern des Materials', details: error });
+  }
+};

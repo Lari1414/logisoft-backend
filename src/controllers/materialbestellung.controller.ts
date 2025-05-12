@@ -40,6 +40,43 @@ export const getAllMaterialbestellungen = async (_req: FastifyRequest, reply: Fa
     return reply.status(500).send({ error: 'Fehler beim Abrufen der Bestellungen' });
   }
 };
+// GET: Alle Bestellungen mit Status "bestellt"
+export const getAllMaterialbestellungenBestellt = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const bestellungen = await prisma.materialbestellung.findMany({
+      where: {
+        status: 'bestellt',
+      },
+      include: {
+        lieferant: true,
+        material: true,
+      },
+    });
+    return reply.send(bestellungen);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Bestellungen' });
+  }
+};
+
+// GET: Alle Bestellungen mit Status "bestellen"
+export const getAllMaterialbestellungenBestellen = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const bestellungen = await prisma.materialbestellung.findMany({
+      where: {
+        status: 'bestellen',
+      },
+      include: {
+        lieferant: true,
+        material: true,
+      },
+    });
+    return reply.send(bestellungen);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Bestellungen' });
+  }
+};
 
 // GET: Bestellung nach ID
 export const getMaterialbestellungById = async (
