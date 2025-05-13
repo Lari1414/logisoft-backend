@@ -40,7 +40,11 @@ export const createLagerbestand = async (
 // GET: Alle Lagerbestände abrufen
 export const getAllLagerbestaende = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
-    const eintraege = await prisma.lagerbestand.findMany();
+    const eintraege = await prisma.lagerbestand.findMany({
+      include: {
+        material: true,
+        qualitaet: true
+      }});
     return reply.send(eintraege);
   } catch (error) {
     console.error(error);
