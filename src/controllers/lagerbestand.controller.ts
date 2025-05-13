@@ -51,6 +51,37 @@ export const getAllLagerbestaende = async (_req: FastifyRequest, reply: FastifyR
     return reply.status(500).send({ error: 'Fehler beim Abrufen der Lagerbestände' });
   }
 };
+export const getAllLagerbestaendeRoh = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const eintraege = await prisma.lagerbestand.findMany({
+      where: {
+        lager_ID: 1
+      },
+      include: {
+        material: true,
+        qualitaet: true
+      }});
+    return reply.send(eintraege);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Lagerbestände' });
+  }
+};
+export const getAllLagerbestaendeFertig = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const eintraege = await prisma.lagerbestand.findMany({
+      where: {
+        lager_ID: 2
+      },
+      include: {
+        material: true
+      }});
+    return reply.send(eintraege);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Lagerbestände' });
+  }
+};
 
 // GET: Einzelnen Lagerbestand abrufen
 export const getLagerbestandById = async (

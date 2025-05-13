@@ -7,7 +7,9 @@ import {
   updateLagerbestandById,
   deleteLagerbestandById,
   auslagernMaterial,
-  einlagernMaterial
+  einlagernMaterial,
+  getAllLagerbestaendeRoh,
+  getAllLagerbestaendeFertig
 } from '../controllers/lagerbestand.controller'
 
 export default async function lagerbestandRoutes(app: FastifyInstance) {
@@ -16,6 +18,10 @@ export default async function lagerbestandRoutes(app: FastifyInstance) {
 
   // GET: Alle Lagerbestände abrufen
   app.get('/', getAllLagerbestaende);
+  // GET: Alle Lagerbestände abrufen von Rohmaterial
+  app.get('/roh', getAllLagerbestaendeRoh);
+  // GET: Alle Lagerbestände abrufen von Fertigmaterial
+  app.get('/fertig', getAllLagerbestaendeFertig);
 
   // GET: Lagerbestand nach ID abrufen
   app.get('/:id', getLagerbestandById);
