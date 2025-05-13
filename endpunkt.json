@@ -1,0 +1,22 @@
+//1 Verkauf frägt Fertigmaterial an
+//http://localhost:8080/api/versandverkauf/materialbestand
+
+    Request:
+    {
+    "category": "Tshirt",
+    "aufdruck":"",
+    "groesse": "L",
+    "farbe": "grün",
+    "typ": "Runden-Ausschnitt"
+    }
+
+    Response:
+    {
+    "material_ID": 14,
+    "category": "Tshirt",
+    "url": null,
+    "groesse": "L",
+    "farbe": "grün",
+    "typ": "Runden-Ausschnitt",
+    "anzahl": 0
+    }
