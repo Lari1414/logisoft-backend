@@ -200,7 +200,7 @@ export const auslagernMaterial = async (
     return reply.status(500).send({ error: 'Fehler beim Auslagern des Materials' });
   }
 };
-export const einlagernMaterial = async (
+export const einlagernRohmaterial = async (
   req: FastifyRequest<{
     Body: {
       eingang_ID: number;
@@ -293,3 +293,80 @@ export const einlagernMaterial = async (
     return reply.status(500).send({ error: 'Fehler beim Einlagern des Materials', details: error });
   }
 };
+export const einlagernFertigmaterial = async (
+  req: FastifyRequest<{
+    Body: {
+      lager_ID: number;
+      menge: number;
+      farbe: string;
+      typ: string;
+      groesse: string;
+      url?: string;
+    };
+  }>,
+  reply: FastifyReply
+) => {
+  try {
+    const {
+      lager_ID,
+      menge,
+      farbe,
+      typ,
+      groesse,
+      url
+    } = req.body;
+
+    let material = await prisma.material.findFirst({
+      where: {
+        lager_ID,
+        farbe,
+        typ,
+        groesse
+      }
+    });
+
+    if (!material) {
+      material = await prisma.material.create({
+        data: {
+          lager_ID,
+          farbe,
+          typ,
+          groesse,
+          url
+        }
+      });
+    }
+
+    const vorhandenerBestand = await prisma.lagerbestand.findFirst({
+      where: {
+        material_ID: material.material_ID,
+        lager_ID
+      }
+    });
+
+    if (vorhandenerBestand) {
+      const aktualisiert = await prisma.lagerbestand.update({
+        where: { lagerbestand_ID: vorhandenerBestand.lagerbestand_ID },
+        data: {
+          menge: vorhandenerBestand.menge + menge
+        }
+      });
+
+      return reply.status(200).send(aktualisiert);
+    } else {
+      const neuerEintrag = await prisma.lagerbestand.create({
+        data: {
+          lager_ID,
+          material_ID: material.material_ID,
+          menge
+        }
+      });
+
+      return reply.status(201).send(neuerEintrag);
+    }
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Einlagern des Fertigmaterials', details: error });
+  }
+};
+

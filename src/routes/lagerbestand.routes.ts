@@ -7,9 +7,10 @@ import {
   updateLagerbestandById,
   deleteLagerbestandById,
   auslagernMaterial,
-  einlagernMaterial,
+  einlagernRohmaterial,
   getAllLagerbestaendeRoh,
-  getAllLagerbestaendeFertig
+  getAllLagerbestaendeFertig,
+  einlagernFertigmaterial
 } from '../controllers/lagerbestand.controller'
 
 export default async function lagerbestandRoutes(app: FastifyInstance) {
@@ -35,6 +36,8 @@ export default async function lagerbestandRoutes(app: FastifyInstance) {
   //POST: Auslagern
   app.post('/auslagern',auslagernMaterial);
   //POST: Einlagern
-  app.post('/einlagern',einlagernMaterial);
+  app.post('/einlagernRoh',einlagernRohmaterial);
+  //POST: Einlagern
+  app.post('/einlagernFertig',einlagernFertigmaterial);
 
 }

@@ -22,7 +22,7 @@ model Material {
   bestellungen   Materialbestellung[]
   lagerbestaende Lagerbestand[]
   mindestbestand Mindestbestand?
-  auftrag        Auftrag[]           @relation("MaterialToAuftrag")
+  auftrag        Auftrag[]            @relation("MaterialToAuftrag")
 }
 
 model Materialbestellung {
@@ -74,7 +74,7 @@ model Lager {
 
   materialien    Material[]
   lagerbestaende Lagerbestand[]
-  auftrag        Auftrag[] @relation("LagerToAuftrag")
+  auftrag        Auftrag[]      @relation("LagerToAuftrag")
 }
 
 model Qualitaet {
@@ -89,18 +89,18 @@ model Qualitaet {
 }
 
 model Lagerbestand {
-  lagerbestand_ID Int @id @default(autoincrement())
+  lagerbestand_ID Int  @id @default(autoincrement())
   eingang_ID      Int?
   lager_ID        Int
   material_ID     Int
   menge           Int
-  qualitaet_ID    Int
+  qualitaet_ID    Int?
 
   eingang   Wareneingang? @relation(fields: [eingang_ID], references: [eingang_ID])
   lager     Lager         @relation(fields: [lager_ID], references: [lager_ID])
   material  Material      @relation(fields: [material_ID], references: [material_ID])
-  qualitaet Qualitaet     @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
-  auftrag    Auftrag[]
+  qualitaet Qualitaet?    @relation(fields: [qualitaet_ID], references: [qualitaet_ID])
+  auftrag   Auftrag[]
 }
 
 model Mindestbestand {
@@ -112,15 +112,15 @@ model Mindestbestand {
 }
 
 model Auftrag {
-  auftrag_ID    Int    @id @default(autoincrement())
-  lager_ID      Int
-  material_ID   Int
-  menge         Int
-  status        String
-  lagerbestand_ID  Int
-  bestellposition   String?
+  auftrag_ID      Int     @id @default(autoincrement())
+  lager_ID        Int
+  material_ID     Int
+  menge           Int
+  status          String
+  lagerbestand_ID Int
+  bestellposition String?
 
-  lager Lager @relation("LagerToAuftrag", fields: [lager_ID], references: [lager_ID])
-  material Material @relation("MaterialToAuftrag", fields: [material_ID], references: [material_ID])
+  lager        Lager        @relation("LagerToAuftrag", fields: [lager_ID], references: [lager_ID])
+  material     Material     @relation("MaterialToAuftrag", fields: [material_ID], references: [material_ID])
   lagerbestand Lagerbestand @relation(fields: [lagerbestand_ID], references: [lagerbestand_ID])
 }
