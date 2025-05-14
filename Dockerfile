@@ -1,25 +1,24 @@
-# Basis-Image
+# Basis-Image mit Node.js (aktuellere Version empfohlen)
 FROM node:18
 
-# Arbeitsverzeichnis
+# Arbeitsverzeichnis im Container
 WORKDIR /app
 
-# Nur package.json + lockfile kopieren und Abhängigkeiten installieren
+# Abhängigkeiten installieren
 COPY package*.json ./
 RUN npm install
-
-# Prisma Client generieren (vor dem Build nötig)
-COPY prisma ./prisma
-RUN npx prisma generate
 
 # Source Code kopieren
 COPY . .
 
+# Prisma Client generieren
+RUN npx prisma generate
+
 # TypeScript build
 RUN npm run build
 
-# Optional: Nur Production-Abhängigkeiten behalten
+# Production-only install (optional, schlanker)
 RUN npm prune --production
 
-# App starten
+# Start (aus dist/)
 CMD ["node", "dist/index.js"]
