@@ -43,7 +43,7 @@ export const getAllMaterials = async (req: FastifyRequest, reply: FastifyReply) 
     return reply.send(materials);
   } catch (error) {
     console.error(error);
-    return reply.status(500).send({ error: 'Fehler beim Abrufen der Materialien' });
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Materialien', message: error });
   }
 };
 
