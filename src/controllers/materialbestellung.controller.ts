@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 interface BestellungInput {
   lieferant_ID: number;
   material_ID: number;
-  status: string;
+  menge: number;
 }
 
 // POST: Materialbestellung erstellen
@@ -16,7 +16,16 @@ export const createMaterialbestellung = async (
 ) => {
   try {
     const bestellung = await prisma.materialbestellung.create({
-      data: req.body,
+      data: {
+        menge: req.body.menge,
+        status: 'offen',
+        lieferant: {
+          connect: { lieferant_ID: req.body.lieferant_ID },
+        },
+        material: {
+          connect: { material_ID: req.body.material_ID },
+        },
+      },
     });
     return reply.status(201).send(bestellung);
   } catch (error) {
@@ -40,6 +49,7 @@ export const getAllMaterialbestellungen = async (_req: FastifyRequest, reply: Fa
     return reply.status(500).send({ error: 'Fehler beim Abrufen der Bestellungen' });
   }
 };
+
 // GET: Alle Bestellungen mit Status "bestellt"
 export const getAllMaterialbestellungenBestellt = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
@@ -59,12 +69,12 @@ export const getAllMaterialbestellungenBestellt = async (_req: FastifyRequest, r
   }
 };
 
-// GET: Alle Bestellungen mit Status "bestellen"
+// GET: Alle Bestellungen mit Status "offen"
 export const getAllMaterialbestellungenBestellen = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const bestellungen = await prisma.materialbestellung.findMany({
       where: {
-        status: 'bestellen',
+        status: 'offen',
       },
       include: {
         lieferant: true,
@@ -105,23 +115,27 @@ export const getMaterialbestellungById = async (
 };
 
 // PUT: Bestellung aktualisieren
-export const updateMaterialbestellungById = async (
-  req: FastifyRequest<{ Params: { id: string }; Body: Partial<BestellungInput> }>,
+export const updateMaterialbestellungenStatus = async (
+  req: FastifyRequest<{ Body: { ids: number[] } }>,
   reply: FastifyReply
 ) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const updated = await prisma.materialbestellung.update({
-      where: { materialbestellung_ID: id },
-      data: req.body,
+    const { ids } = req.body;
+
+    const result = await prisma.materialbestellung.updateMany({
+      where: {
+        materialbestellung_ID: { in: ids },
+        status: 'offen',
+      },
+      data: {
+        status: 'bestellt',
+      },
     });
-    return reply.send(updated);
+
+    return reply.send({ updatedCount: result.count });
   } catch (error: any) {
     console.error(error);
-    if (error.code === 'P2025') {
-      return reply.status(404).send({ error: 'Bestellung nicht gefunden' });
-    }
-    return reply.status(500).send({ error: 'Fehler beim Aktualisieren der Bestellung' });
+    return reply.status(500).send({ error: 'Fehler beim Aktualisieren der Bestellungen' });
   }
 };
 

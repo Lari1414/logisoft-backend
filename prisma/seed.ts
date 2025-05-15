@@ -133,7 +133,8 @@ async function main() {
       data: {
         lieferant_ID: lieferant.lieferant_ID,
         material_ID: mat.material_ID,
-        status: 'Bestellt',
+        status: 'bestellt',
+        menge: faker.number.int({ min: 10, max: 100 }),
       },
     });
 
@@ -142,7 +143,7 @@ async function main() {
         material_ID: mat.material_ID,
         materialbestellung_ID: bestellung.materialbestellung_ID,
         menge: faker.number.int({ min: 10, max: 100 }),
-        status: 'Eingelagert',
+        status: 'eingelagert',
         lieferdatum: faker.date.recent(),
       },
     });
@@ -186,7 +187,8 @@ async function main() {
       data: {
         lieferant_ID: rohmatlieferant.lieferant_ID,
         material_ID: rohmat.material_ID,
-        status: 'Bestellt',
+        status: 'bestellt',
+        menge: faker.number.int({ min: 10, max: 100 }),
       },
     });
 
@@ -195,7 +197,7 @@ async function main() {
         material_ID: rohmat.material_ID,
         materialbestellung_ID: rohmatbestellung.materialbestellung_ID,
         menge: faker.number.int({ min: 10, max: 100 }),
-        status: 'Eingelagert',
+        status: 'eingelagert',
         lieferdatum: faker.date.recent(),
       },
     });

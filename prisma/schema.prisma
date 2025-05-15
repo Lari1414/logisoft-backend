@@ -30,6 +30,7 @@ model Materialbestellung {
   lieferant_ID          Int
   material_ID           Int
   status                String?
+  menge                 Int
 
   lieferant Lieferant      @relation(fields: [lieferant_ID], references: [lieferant_ID])
   material  Material       @relation(fields: [material_ID], references: [material_ID])
