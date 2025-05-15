@@ -55,7 +55,10 @@ export const getAllLagerbestaendeRoh = async (_req: FastifyRequest, reply: Fasti
   try {
     const eintraege = await prisma.lagerbestand.findMany({
       where: {
-        lager_ID: 1
+        lager_ID: 1,
+        menge: {
+          gt: 0
+        }
       },
       include: {
         material: true,
@@ -71,7 +74,10 @@ export const getAllLagerbestaendeFertig = async (_req: FastifyRequest, reply: Fa
   try {
     const eintraege = await prisma.lagerbestand.findMany({
       where: {
-        lager_ID: 2
+        lager_ID: 2,
+        menge: {
+          gt: 0
+        }
       },
       include: {
         material: true
@@ -150,49 +156,31 @@ export const deleteLagerbestandById = async (
   }
 };
 
-// POST: Material auslagern
 export const auslagernMaterial = async (
-  req: FastifyRequest<{ Body: { material_ID: number; menge: number } }>,
+  req: FastifyRequest<{ Body: { lagerbestand_ID: number; menge: number } }>,
   reply: FastifyReply
 ) => {
   try {
-    const { material_ID, menge } = req.body;
+    const { lagerbestand_ID, menge } = req.body;
 
-    // Zuerst alle Einträge im Lagerbestand mit dieser material_ID abrufen
-    const lagerbestände = await prisma.lagerbestand.findMany({
-      where: { material_ID },
+    // Lagerbestandseintrag mit der lagerbestand_ID abrufen
+    const bestand = await prisma.lagerbestand.findUnique({
+      where: { lagerbestand_ID },
     });
 
-    // Die gesamt Menge des Materials im Lagerbestand berechnen
-    const gesamtBestand = lagerbestände.reduce((sum, bestand) => sum + bestand.menge, 0);
-
-    // Überprüfen, ob genug Bestand vorhanden ist
-    if (gesamtBestand < menge) {
-      return reply.status(400).send({ error: 'Nicht genügend Material im Lager' });
+    if (!bestand) {
+      return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
     }
 
-    let verbleibendeMenge = menge;
-
-    // Lagerbestände in Reihenfolge abarbeiten und die Menge reduzieren
-    for (const bestand of lagerbestände) {
-      if (verbleibendeMenge === 0) break;
-
-      if (bestand.menge >= verbleibendeMenge) {
-        // Wenn der aktuelle Eintrag die verbleibende Menge decken kann
-        await prisma.lagerbestand.update({
-          where: { lagerbestand_ID: bestand.lagerbestand_ID },
-          data: { menge: bestand.menge - verbleibendeMenge },
-        });
-        verbleibendeMenge = 0;
-      } else {
-        // Wenn der aktuelle Eintrag nicht genug Bestand hat
-        await prisma.lagerbestand.update({
-          where: { lagerbestand_ID: bestand.lagerbestand_ID },
-          data: { menge: 0 },
-        });
-        verbleibendeMenge -= bestand.menge;
-      }
+    if (bestand.menge < menge) {
+      return reply.status(400).send({ error: 'Nicht genügend Material im Lagerbestand' });
     }
+
+    // Menge im Lagerbestand reduzieren
+    await prisma.lagerbestand.update({
+      where: { lagerbestand_ID },
+      data: { menge: bestand.menge - menge },
+    });
 
     return reply.status(200).send({ message: 'Material erfolgreich ausgelagert' });
   } catch (error) {
@@ -200,6 +188,7 @@ export const auslagernMaterial = async (
     return reply.status(500).send({ error: 'Fehler beim Auslagern des Materials' });
   }
 };
+
 export const einlagernRohmaterial = async (
   req: FastifyRequest<{
     Body: {

@@ -18,7 +18,7 @@ export async function erstelleAuslagerungsAuftrag(
   const { material_ID, anzahl, bestellposition } = req.body;
 
   try {
-    // Dein bestehender Code hierhin verschieben
+
     const lagerbestand = await prisma.lagerbestand.findFirst({
       where: { material_ID },
     });
