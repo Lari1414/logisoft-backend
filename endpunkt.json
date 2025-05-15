@@ -1,17 +1,16 @@
+//Endpunkte zu Verkauf und Versand
 //1 Verkauf frägt Fertigmaterial an
 //http://localhost:8080/api/versandverkauf/materialbestand
 
-    Request:
-    {
+    Request: {
     "category": "Tshirt",
-    "aufdruck":"",
+    "aufdruck": "",
     "groesse": "L",
     "farbe": "grün",
     "typ": "Runden-Ausschnitt"
-    }
+}
 
-    Response:
-    {
+    Response: {
     "material_ID": 14,
     "category": "Tshirt",
     "url": null,
@@ -19,4 +18,192 @@
     "farbe": "grün",
     "typ": "Runden-Ausschnitt",
     "anzahl": 0
+}
+//Endpunkte zur Produktion
+//Schnittstelle 5: Produktion frägt Fertigmaterial ab
+//http://localhost:8080/api/produktion/fertigmaterial/abfragen
+
+Request: [
+    {
+        "Artikelnummer": 35
+    },
+    {
+        "Artikelnummer": 26
+    },
+    {
+        "Artikelnummer": 31
     }
+]
+
+Response: [
+    {
+        "artikelnummer": 35,
+        "verfuegbar": [
+            {
+                "farbe": "salmon",
+                "groesse": "L",
+                "menge": 51
+            }
+        ]
+    },
+    {
+        "artikelnummer": 26,
+        "verfuegbar": []
+    },
+    {
+        "artikelnummer": 31,
+        "verfuegbar": []
+    }
+]
+//Schnittstelle 6: Produktion frägt Rohmaterial ab
+//http://localhost:8080/api/produktion/rohmaterial/abfragen
+
+Request: [
+    {
+        "category": "T-Shirt",
+        "farbe": "lavender",
+        "typ": "V-Ausschnitt",
+        "groesse": "M"
+    },
+    {
+        "category": "T-Shirt",
+        "farbe": "ivory",
+        "typ": "Sport",
+        "groesse": "L"
+    }
+]
+
+Response: [
+    {
+        "Artikelnummer": null,
+        "Anzahl": 0
+    },
+    {
+        "Artikelnummer": 33,
+        "Anzahl": 135
+    }
+]
+//Schnittstelle 7: Produktion bestellt bei Materialwirtschaft
+//http://localhost:8080/api/produktion/material/bestellen
+
+Request: [
+    {
+        "Artikelnummer": 3,
+        "Anzahl": 20,
+        "Bestellposition": "B-101"
+    },
+    {
+        "Artikelnummer": 6,
+        "Anzahl": 15,
+        "Bestellposition": "B-102"
+    }
+]
+
+Response: Status 200
+//Schnittstelle 8: Produktion bestellt Farben, Druckfolie, Verpackung
+//http://localhost:8080/api/produktion/rohmaterial/bereitstellen
+
+Request: [
+    {
+        "bezeichnung": "Verpackung",
+        "eigenschaft": null
+    },
+    {
+        "bezeichnung": "Druckfolie",
+        "eigenschaft": "schwarz"
+    },
+    {
+        "bezeichnung": "Farbe",
+        "eigenschaft": "silber"
+    }
+]
+
+Response: [
+    {
+        "bezeichnung": "Verpackung",
+        "eigenschaft": null,
+        "status": "bereitgestellt",
+        "qualitaet": {
+            "qualitaet_ID": 1,
+            "viskositaet": 2.02401880661447,
+            "ppml": 321,
+            "deltaE": 1.777799257515616,
+            "saugfaehigkeit": 5.693797534575991,
+            "weissgrad": 80
+        }
+    },
+    {
+        "bezeichnung": "Druckfolie",
+        "eigenschaft": "schwarz",
+        "status": "bereitgestellt",
+        "qualitaet": {
+            "qualitaet_ID": 2,
+            "viskositaet": null,
+            "ppml": 494,
+            "deltaE": null,
+            "saugfaehigkeit": null,
+            "weissgrad": null
+        }
+    },
+    {
+        "bezeichnung": "Farbe",
+        "eigenschaft": "silber",
+        "status": "Material nicht gefunden"
+    }
+]
+//Schnittstelle 9: Produktion meldet Rohmaterialreste zurück
+//http://localhost:8080/api/produktion/rohmaterial/zurueckgeben
+
+Request: [
+    {
+        "artikelnummer": 7,
+        "menge": 5,
+        "qualitaet": {
+            "viskositaet": 12.5,
+            "ppml": null,
+            "deltaE": 1.8,
+            "saugfaehigkeit": null,
+            "weissgrad": 89.5
+        }
+    },
+    {
+        "artikelnummer": 7,
+        "menge": 3,
+        "qualitaet": {
+            "deltaE": 2.1,
+            "weissgrad": null
+        }
+    }
+]
+
+Response: [
+    {
+        "artikelnummer": 7,
+        "status": "Einlagerung angefordert",
+        "lagerbestand_ID": 9
+    },
+    {
+        "artikelnummer": 7,
+        "status": "Einlagerung angefordert",
+        "lagerbestand_ID": 10
+    }
+]
+//Schnittstelle 10: Produktion meldet Fertigmaterial zum einlagern
+//http://localhost:8080/api/produktion/fertigmaterial/anliefern
+
+Request: [
+    {
+        "bestellposition": "Bestellung-001",
+        "artikelnummer": 2,
+        "url": "https://cumbersome-citizen.net",
+        "menge": 35
+    },
+    {
+        "bestellposition": "Bestellung-002",
+        "artikelnummer": 3,
+        "url": "https://valuable-sprinkles.info/",
+        "menge": 75
+    }
+]
+
+Respone: Status 200
