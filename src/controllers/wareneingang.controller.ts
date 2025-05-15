@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma'; // Beachte den Pfad zu deinem Prisma Client
+import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
 const prisma = new PrismaClient();
@@ -8,7 +8,7 @@ interface EingangBody {
   materialbestellung_ID: number;
   menge: number;
   status?: string;
-  lieferdatum: string; // ISO-Datumstring (z.B. "2025-05-04T00:00:00.000Z")
+  lieferdatum: string;
 }
 
 // POST: Neuer Wareneingang
@@ -20,7 +20,7 @@ export const createEingang = async (req: FastifyRequest<{ Body: EingangBody }>, 
         materialbestellung_ID: req.body.materialbestellung_ID,
         menge: req.body.menge,
         status: req.body.status,
-        lieferdatum: new Date(req.body.lieferdatum), // Umwandlung des Strings in ein Date-Objekt
+        lieferdatum: new Date(req.body.lieferdatum),
       },
     });
     reply.status(201).send(eingang);
@@ -35,8 +35,8 @@ export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply)
   try {
     const result = await prisma.wareneingang.findMany({
       include: {
-        material: true,           // Bezug zum Material (Materialmodell)
-        materialbestellung: true, // Bezug zur Materialbestellung
+        material: true,
+        materialbestellung: true,
       },
     });
     reply.send(result);
@@ -50,10 +50,10 @@ export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply)
 export const getEingangById = async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   try {
     const eingang = await prisma.wareneingang.findUnique({
-      where: { eingang_ID: parseInt(req.params.id, 10) }, // Eingangs-ID zur Abfrage
+      where: { eingang_ID: parseInt(req.params.id, 10) },
       include: {
-        material: true,           // Bezug zum Material (Materialmodell)
-        materialbestellung: true, // Bezug zur Materialbestellung
+        material: true,
+        materialbestellung: true,
       },
     });
     if (!eingang) {
@@ -72,7 +72,7 @@ export const updateEingangById = async (req: FastifyRequest<{ Params: { id: stri
     const id = parseInt(req.params.id, 10);
     const updated = await prisma.wareneingang.update({
       where: { eingang_ID: id },
-      data: req.body,  // Hier wird der Body verwendet, der die Änderungen enthält
+      data: req.body,
     });
     reply.send(updated);
   } catch (err: any) {
@@ -89,7 +89,7 @@ export const deleteEingangById = async (req: FastifyRequest<{ Params: { id: stri
   try {
     const id = parseInt(req.params.id, 10);
     await prisma.wareneingang.delete({ where: { eingang_ID: id } });
-    reply.status(204).send();  // Kein Inhalt, aber erfolgreiche Löschung
+    reply.status(204).send();
   } catch (err: any) {
     console.error(err);
     if (err.code === 'P2025') {
