@@ -13,7 +13,7 @@ export default async function materialbestellungRoutes(app: FastifyInstance) {
   app.post('/', createMaterialbestellung);
   app.get('/', getAllMaterialbestellungen);
   app.get('/bestellt', getAllMaterialbestellungenBestellt);
-  app.get('/bestellen', getAllMaterialbestellungenBestellen);
+  app.get('/offen', getAllMaterialbestellungenBestellen);
   app.get('/:id', getMaterialbestellungById);
   app.put('/absenden', updateMaterialbestellungenStatus);
   app.delete('/:id', deleteMaterialbestellungById);
