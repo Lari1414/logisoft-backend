@@ -488,7 +488,7 @@ export const fertigmaterialAnliefern = async (
             let material = await prisma.material.findFirst({
                 where: {
                     material_ID: artikelnummer,
-                    url,
+                    url: url,
                 },
             });
 
@@ -506,8 +506,17 @@ export const fertigmaterialAnliefern = async (
             let lagerbestandId: number;
 
             if (!vorhandenerBestand) {
-                return reply.status(500).send({ error: 'Lagerbestand nicht gefunden: Einlagerung fehlgeschlagen' });
-            } else {
+                const neuerLagerbestand = await prisma.lagerbestand.create({
+                    data: {
+                        lager_ID: fertigLager.lager_ID,
+                        material_ID: artikelnummer,
+                        menge: 0,
+                    },
+                });
+
+                lagerbestandId = neuerLagerbestand.lagerbestand_ID;
+            }
+            else {
                 lagerbestandId = vorhandenerBestand.lagerbestand_ID;
             }
 
@@ -529,7 +538,7 @@ export const fertigmaterialAnliefern = async (
             });
         }
 
-        return reply.status(200);
+        return reply.status(200).send(result);
     } catch (error) {
         console.error('Fehler bei der Einlagerung:', error);
         return reply.status(500).send({ error: 'Einlagerung fehlgeschlagen' });
