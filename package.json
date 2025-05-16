@@ -9,7 +9,8 @@
     "dev": "ts-node src/index.ts",
     "test": "NODE_ENV=test vitest",
     "release": "node esbuild.js",
-    "prisma": "prisma generate --no-hints"
+    "prisma": "prisma generate --no-hints",
+    "postbuild": "cp -r node_modules/.prisma dist/node_modules/.prisma"
   },
   "keywords": [],
   "author": "",

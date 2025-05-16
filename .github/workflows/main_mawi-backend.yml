@@ -27,6 +27,7 @@ jobs:
         run: |
           npm install
           npm run prisma
+          npm run postbuild
           npm run release --if-present
 
       - name: Zip artifact for deployment
