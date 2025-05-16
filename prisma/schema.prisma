@@ -45,9 +45,12 @@ model Wareneingang {
   status                String?
   lieferdatum           DateTime
 
-  material           Material           @relation(fields: [material_ID], references: [material_ID])
-  materialbestellung Materialbestellung @relation(fields: [materialbestellung_ID], references: [materialbestellung_ID])
-  lagerbestaende     Lagerbestand[]
+  qualitaet_ID          Int?
+  qualitaet             Qualitaet? @relation("QualitaetToWareneingang", fields: [qualitaet_ID], references: [qualitaet_ID])
+
+  material              Material           @relation(fields: [material_ID], references: [material_ID])
+  materialbestellung    Materialbestellung @relation(fields: [materialbestellung_ID], references: [materialbestellung_ID])
+  lagerbestaende        Lagerbestand[]
 }
 
 model Lieferant {
@@ -79,14 +82,15 @@ model Lager {
 }
 
 model Qualitaet {
-  qualitaet_ID   Int    @id @default(autoincrement())
+  qualitaet_ID   Int     @id @default(autoincrement())
   viskositaet    Float?
   ppml           Int?
   deltaE         Float?
   saugfaehigkeit Float?
   weissgrad      Int?
 
-  eingaenge Lagerbestand[]
+  eingaenge      Lagerbestand[]
+  wareneingaenge Wareneingang[] @relation("QualitaetToWareneingang")
 }
 
 model Lagerbestand {

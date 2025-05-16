@@ -3,7 +3,7 @@ import {
   createEingang,
   getAllEingaenge,
   getEingangById,
-  updateEingangById,
+  //updateEingangById,
   deleteEingangById,
   updateEingaengeSperren,
   wareneingangEingelagern
@@ -13,7 +13,7 @@ export default async function wareneingangRoutes(app: FastifyInstance) {
   app.post('/', createEingang);
   app.get('/', getAllEingaenge);
   app.get('/:id', getEingangById);
-  app.put('/:id', updateEingangById);
+  //app.put('/:id', updateEingangById);
   app.delete('/:id', deleteEingangById);
   app.put('/sperren', updateEingaengeSperren);
   app.post('/einlagern', wareneingangEingelagern);

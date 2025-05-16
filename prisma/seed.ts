@@ -145,6 +145,7 @@ async function main() {
         menge: faker.number.int({ min: 10, max: 100 }),
         status: 'eingelagert',
         lieferdatum: faker.date.recent(),
+        qualitaet_ID: quali.qualitaet_ID,
       },
     });
 
@@ -158,7 +159,6 @@ async function main() {
         lager_ID: mat.lager_ID,
         material_ID: mat.material_ID,
         menge: eingang.menge,
-        qualitaet_ID: quali.qualitaet_ID  // Überprüfe und setze NULL, wenn nicht benötigt
       },
     });
 
@@ -199,10 +199,10 @@ async function main() {
         menge: faker.number.int({ min: 10, max: 100 }),
         status: 'eingelagert',
         lieferdatum: faker.date.recent(),
+        qualitaet_ID: rohmatquali.qualitaet_ID,
       },
     });
 
-    // Rohmaterial benötigt keine Qualitaet_ID, also setze es auf NULL
     await prisma.lagerbestand.create({
       data: {
         eingang_ID: rohmateingang.eingang_ID,
@@ -213,13 +213,18 @@ async function main() {
       },
     });
 
-    // **Füge Mindestbestand für Rohmaterial hinzu**
-    await prisma.mindestbestand.create({
-      data: {
-        material_ID: rohmat.material_ID,
-        mindestbestand: faker.number.int({ min: 5, max: 20 }),
-      },
+    const existingRohmatMindestbestand = await prisma.mindestbestand.findUnique({
+      where: { material_ID: rohmat.material_ID },
     });
+
+    if (!existingRohmatMindestbestand) {
+      await prisma.mindestbestand.create({
+        data: {
+          material_ID: rohmat.material_ID,
+          mindestbestand: faker.number.int({ min: 5, max: 20 }),
+        },
+      });
+    }
   }
 
   console.log('Seed erfolgreich abgeschlossen');
