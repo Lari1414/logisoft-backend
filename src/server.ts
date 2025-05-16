@@ -15,6 +15,7 @@ export async function createServer(): Promise<FastifyInstance> {
       'http://localhost:5173',
       'https://codevision.up.railway.app',
       'http://localhost:80',
+      'https://mawi-frontend-c4g8d9befvdjg4ae.swedencentral-01.azurewebsites.net',
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   });
