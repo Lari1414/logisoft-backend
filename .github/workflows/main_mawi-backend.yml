@@ -70,5 +70,5 @@ jobs:
         with:
           app-name: 'mawi-backend'
           slot-name: 'Production'
-          package: .
+          package: dist
           
