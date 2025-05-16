@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "NODE_ENV=test vitest",
-    "release": "node esbuild.js"
+    "release": "node esbuild.js",
+    "prisma": "prisma generate --no-hints"
   },
   "keywords": [],
   "author": "",
