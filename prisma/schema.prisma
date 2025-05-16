@@ -124,6 +124,7 @@ model Auftrag {
   status          String
   lagerbestand_ID Int
   bestellposition String?
+  angefordertVon  String
 
   lager        Lager        @relation("LagerToAuftrag", fields: [lager_ID], references: [lager_ID])
   material     Material     @relation("MaterialToAuftrag", fields: [material_ID], references: [material_ID])

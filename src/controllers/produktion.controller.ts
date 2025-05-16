@@ -101,6 +101,7 @@ export const produktionBestelltMaterial = async (
                             status: 'Auslagerung angefordert',
                             lagerbestand_ID: bestand.lagerbestand_ID,
                             bestellposition: Bestellposition,
+                            angefordertVon: "Produktion"
                         },
                     });
 
@@ -121,7 +122,7 @@ export const produktionBestelltMaterial = async (
             });
         }
 
-        return reply.status(200);
+        return reply.status(200).send(result);
     } catch (error) {
         console.error('Fehler bei Bestellverarbeitung:', error);
         return reply.status(500).send({ error: 'Interner Serverfehler bei Bestellverarbeitung' });
@@ -441,6 +442,7 @@ export const rohmaterialZurueckgeben = async (
                     menge,
                     status: 'Einlagerung angefordert',
                     lagerbestand_ID: lagerbestand.lagerbestand_ID,
+                    angefordertVon: 'Produktion'
                 },
             });
 
@@ -528,6 +530,7 @@ export const fertigmaterialAnliefern = async (
                     menge,
                     status: 'Einlagerung angefordert',
                     lagerbestand_ID: lagerbestandId,
+                    angefordertVon: 'Produktion'
                 },
             });
 

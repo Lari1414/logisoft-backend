@@ -35,6 +35,7 @@ export async function erstelleAuslagerungsAuftrag(
         lagerbestand_ID: lagerbestand.lagerbestand_ID,
         lager_ID: lagerbestand.lager_ID,
         bestellposition: bestellposition ?? null,
+        angefordertVon: "Verkauf und Versand"
       },
     });
 
