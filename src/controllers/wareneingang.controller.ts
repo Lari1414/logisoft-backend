@@ -130,3 +130,79 @@ export const deleteEingangById = async (req: FastifyRequest<{ Params: { id: stri
     reply.status(500).send({ error: 'Fehler beim Löschen' });
   }
 };
+
+// POST: Wareneingang einlagern
+export const wareneingangEingelagern = async (
+  req: FastifyRequest<{ Body: { ids: number[] } }>,
+  reply: FastifyReply
+) => {
+  try {
+    const ids = req.body.ids;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return reply.status(400).send({ error: 'Keine gültigen IDs übergeben' });
+    }
+
+    const rohmaterialLager = await prisma.lager.findFirst({
+      where: { bezeichnung: 'Rohmateriallager' },
+    });
+
+    if (!rohmaterialLager) {
+      return reply.status(404).send({ error: 'Rohmateriallager nicht gefunden' });
+    }
+
+    const rohmaterialLagerId = rohmaterialLager.lager_ID;
+
+    let erfolgreichEingelagert = 0;
+    let übersprungen = 0;
+
+    for (const id of ids) {
+      const wareneingang = await prisma.wareneingang.findUnique({
+        where: { eingang_ID: id },
+      });
+
+      if (!wareneingang) continue;
+
+      if (wareneingang.status === 'gesperrt') {
+        übersprungen++;
+        continue;
+      }
+
+      let lagerbestand = await prisma.lagerbestand.findFirst({
+        where: {
+          material_ID: wareneingang.material_ID,
+          eingang_ID: wareneingang.eingang_ID,
+          lager_ID: rohmaterialLagerId,
+        },
+      });
+
+      if (lagerbestand) {
+        await prisma.lagerbestand.update({
+          where: { lagerbestand_ID: lagerbestand.lagerbestand_ID },
+          data: {
+            menge: lagerbestand.menge + wareneingang.menge,
+          },
+        });
+      } else {
+        return reply.status(500).send({ error: 'Fehler beim Einlagern: Lagerbestand nicht gefunden.' });
+      }
+
+      await prisma.wareneingang.update({
+        where: { eingang_ID: id },
+        data: {
+          status: 'eingelagert',
+        },
+      });
+
+      erfolgreichEingelagert++;
+    }
+
+    return reply.send({
+      erfolgreichEingelagert,
+      übersprungen,
+    });
+  } catch (err) {
+    console.error(err);
+    return reply.status(500).send({ error: 'Fehler beim Einlagern' });
+  }
+};
+

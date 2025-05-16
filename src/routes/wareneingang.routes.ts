@@ -5,7 +5,8 @@ import {
   getEingangById,
   updateEingangById,
   deleteEingangById,
-  updateEingaengeSperren
+  updateEingaengeSperren,
+  wareneingangEingelagern
 } from '../controllers/wareneingang.controller';
 
 export default async function wareneingangRoutes(app: FastifyInstance) {
@@ -15,4 +16,5 @@ export default async function wareneingangRoutes(app: FastifyInstance) {
   app.put('/:id', updateEingangById);
   app.delete('/:id', deleteEingangById);
   app.put('/sperren', updateEingaengeSperren);
+  app.post('/einlagern', wareneingangEingelagern);
 }
