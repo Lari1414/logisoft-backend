@@ -1,6 +1,6 @@
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
-
+import { startOfDay, endOfDay } from 'date-fns';
 const prisma = new PrismaClient();
 
 type EingangBody = {
@@ -119,6 +119,26 @@ export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply)
   }
 };
 
+
+export const getAllEingaengeHeute = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const now = new Date();
+    const result = await prisma.wareneingang.findMany({
+      where: {
+        lieferdatum: {
+          gte: startOfDay(now), // >= heute um 00:00 Uhr
+          lte: endOfDay(now),   // <= heute um 23:59:59
+        },
+      },
+    });
+
+    reply.send(result);
+  } catch (err) {
+    console.error(err);
+    reply.status(500).send({ error: 'Fehler beim Abrufen der Wareneingänge' });
+  }
+};
+
 // GET: Einzelner Wareneingang
 export const getEingangById = async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   try {
@@ -203,6 +223,8 @@ export const deleteEingangById = async (req: FastifyRequest<{ Params: { id: stri
     reply.status(500).send({ error: 'Fehler beim Löschen' });
   }
 };
+
+
 
 // POST: Wareneingang einlagern
 export const wareneingangEingelagern = async (
