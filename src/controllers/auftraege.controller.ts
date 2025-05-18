@@ -278,7 +278,7 @@ export const getAuftraege = async (_req: FastifyRequest, reply: FastifyReply) =>
     const auftraege = await prisma.auftrag.findMany({
       where: {
         status: {
-          in: ["Einlagerung angefordert", "Ausgelagerung angefordert"],
+          in: ["Einlagerung angefordert", "Auslagerung angefordert"],
         },
       }
     });
