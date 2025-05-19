@@ -14,7 +14,7 @@ export const getMaterialBestand = async (
   reply: FastifyReply
 ) => {
   try {
-    const {category, aufdruck, groesse, farbe, typ } = req.body;
+    const { category, aufdruck, groesse, farbe, typ } = req.body;
 
     // 1. Suche das passende Material in der Materialtabelle
     let material = await prisma.material.findFirst({
@@ -22,7 +22,9 @@ export const getMaterialBestand = async (
         category: category,
         url: aufdruck,
         groesse: groesse,
-        farbe: farbe,
+        farbe: {
+          equals: farbe
+        },
         typ: typ,
       },
     });
@@ -60,7 +62,7 @@ export const getMaterialBestand = async (
     return reply.send({
       material_ID: material.material_ID, // Die material_ID zurückgeben
       category: material.category,
-      url:  material.url ,
+      url: material.url,
       groesse: material.groesse,
       farbe: material.farbe,
       typ: material.typ,

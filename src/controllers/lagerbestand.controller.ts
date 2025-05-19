@@ -9,7 +9,7 @@ interface CreateLagerbestandBody {
   lager_ID: number;
   material_ID: number;
   menge: number;
-  qualitaet_ID:number;
+  qualitaet_ID: number;
 }
 
 // POST: Lagerbestand anlegen
@@ -18,7 +18,7 @@ export const createLagerbestand = async (
   reply: FastifyReply
 ) => {
   try {
-    const { eingang_ID, lager_ID, material_ID, menge,qualitaet_ID } = req.body;
+    const { eingang_ID, lager_ID, material_ID, menge, qualitaet_ID } = req.body;
 
     const neuerEintrag = await prisma.lagerbestand.create({
       data: {
@@ -44,7 +44,8 @@ export const getAllLagerbestaende = async (_req: FastifyRequest, reply: FastifyR
       include: {
         material: true,
         qualitaet: true
-      }});
+      }
+    });
     return reply.send(eintraege);
   } catch (error) {
     console.error(error);
@@ -63,7 +64,8 @@ export const getAllLagerbestaendeRoh = async (_req: FastifyRequest, reply: Fasti
       include: {
         material: true,
         qualitaet: true
-      }});
+      }
+    });
     return reply.send(eintraege);
   } catch (error) {
     console.error(error);
@@ -81,7 +83,8 @@ export const getAllLagerbestaendeFertig = async (_req: FastifyRequest, reply: Fa
       },
       include: {
         material: true
-      }});
+      }
+    });
     return reply.send(eintraege);
   } catch (error) {
     console.error(error);
@@ -197,7 +200,12 @@ export const einlagernRohmaterial = async (
       menge: number;
       qualitaet_ID: number;
       category: string;
-      farbe: string;
+      farbe: {
+        cyan: string;
+        magenta: string;
+        yellow: string;
+        black: string;
+      };
       typ: string;
       groesse: string;
       url?: string;
@@ -223,7 +231,9 @@ export const einlagernRohmaterial = async (
       where: {
         lager_ID,
         category,
-        farbe,
+        farbe: {
+          equals: farbe
+        },
         typ,
         groesse
       }
@@ -282,6 +292,7 @@ export const einlagernRohmaterial = async (
     return reply.status(500).send({ error: 'Fehler beim Einlagern des Materials', details: error });
   }
 };
+
 export const einlagernFertigmaterial = async (
   req: FastifyRequest<{
     Body: {
@@ -308,7 +319,9 @@ export const einlagernFertigmaterial = async (
     let material = await prisma.material.findFirst({
       where: {
         lager_ID,
-        farbe,
+        farbe: {
+          equals: farbe
+        },
         typ,
         groesse
       }

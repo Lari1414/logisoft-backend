@@ -6,7 +6,12 @@ const prisma = new PrismaClient();
 type EingangBody = {
   materialDetails: {
     category?: string;
-    farbe?: string;
+    farbe?: {
+      cyan: string;
+      magenta: string;
+      yellow: string;
+      black: string;
+    };
     typ?: string;
     groesse?: string;
   };
@@ -49,7 +54,9 @@ export const createEingang = async (
       where: {
         lager_ID: rohmaterialLager.lager_ID,
         category: materialDetails.category,
-        farbe: materialDetails.farbe,
+        farbe: {
+          equals: materialDetails.farbe
+        },
         typ: materialDetails.typ,
         groesse: materialDetails.groesse,
       },
