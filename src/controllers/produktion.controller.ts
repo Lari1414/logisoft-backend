@@ -243,34 +243,45 @@ export const fertigmaterialAbfragen = async (
 
         const result: Record<
             number,
-            Record<string, { farbe: string | null; groesse: string | null; menge: number }>
+            {
+                artikelnummer: number;
+                farbe: string | null;
+                groesse: string | null;
+                typ: string | null;
+                category: string | null;
+                url: string | null;
+                menge: number;
+            }
         > = {};
 
         for (const bestand of lagerbestaende) {
-            const matId = bestand.material_ID;
-            const farbe = bestand.material.farbe ?? 'unbekannt';
-            const groesse = bestand.material.groesse ?? 'unbekannt';
-            const key = `${farbe}-${groesse}`;
+            const mat = bestand.material;
+            const matId = mat.material_ID;
 
             if (!result[matId]) {
-                result[matId] = {};
-            }
-
-            if (!result[matId][key]) {
-                result[matId][key] = {
-                    farbe,
-                    groesse,
+                result[matId] = {
+                    artikelnummer: mat.material_ID,
+                    farbe: mat.farbe ?? null,
+                    groesse: mat.groesse ?? null,
+                    typ: mat.typ ?? null,
+                    category: mat.category ?? null,
+                    url: mat.url ?? null,
                     menge: 0,
                 };
             }
 
-            result[matId][key].menge += bestand.menge;
+            result[matId].menge += bestand.menge;
         }
 
-        const antwort = artikelnummern.map((nummer) => ({
+        const antwort = artikelnummern.map((nummer) => result[nummer] ?? {
             artikelnummer: nummer,
-            verfuegbar: Object.values(result[nummer] || {}),
-        }));
+            farbe: null,
+            groesse: null,
+            typ: null,
+            category: null,
+            url: null,
+            menge: 0,
+        });
 
         return reply.send(antwort);
     } catch (error) {
