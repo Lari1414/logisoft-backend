@@ -249,7 +249,6 @@ export const fertigmaterialAbfragen = async (
                 groesse: string | null;
                 typ: string | null;
                 category: string | null;
-                url: string | null;
                 menge: number;
             }
         > = {};
@@ -265,7 +264,6 @@ export const fertigmaterialAbfragen = async (
                     groesse: mat.groesse ?? null,
                     typ: mat.typ ?? null,
                     category: mat.category ?? null,
-                    url: mat.url ?? null,
                     menge: 0,
                 };
             }
@@ -279,7 +277,6 @@ export const fertigmaterialAbfragen = async (
             groesse: null,
             typ: null,
             category: null,
-            url: null,
             menge: 0,
         });
 
