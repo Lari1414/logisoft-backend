@@ -5,13 +5,17 @@ import {
     materialEinlagern,
     materialAuslagern,
     getHistorie,
-    getAuftraege
+    getAuftraege,
+    getEinlagerungsAuftraege,
+    getAuslagerungsAuftraege
 } from '../controllers/auftraege.controller';
 
 export default async function auftraegeRoutes(app: FastifyInstance) {
     // GET
     app.get('/historie/abfragen', getHistorie);
     app.get('/abfragen', getAuftraege);
+    app.get('/abfragen/einlagerung', getEinlagerungsAuftraege);
+    app.get('/abfragen/auslagerung', getAuslagerungsAuftraege);
 
     // POST
     app.post('/erstelleAuslagerungsAuftrag', erstelleAuslagerungsAuftrag);
