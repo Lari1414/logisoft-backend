@@ -24,7 +24,6 @@ export const getMaterialBestand = async (
   try {
     const { category, aufdruck, groesse, farbe, farbe_json, typ, standardmaterial } = req.body;
 
-    // 1. Suche das passende Material in der Materialtabelle
     let material = await prisma.material.findFirst({
       where: {
         category: category,
@@ -37,7 +36,6 @@ export const getMaterialBestand = async (
       },
     });
 
-    // Wenn kein Material gefunden wurde, erstellen wir einen neuen Eintrag
     if (!material) {
       const istUrlGueltig = typeof aufdruck === 'string' && aufdruck.trim() !== '';
 
@@ -57,21 +55,19 @@ export const getMaterialBestand = async (
       });
     }
 
-    // 2. Berechne die Gesamtmenge des Materials im Lagerbestand
     const bestand = await prisma.lagerbestand.aggregate({
       where: {
-        material_ID: material.material_ID,  // Material aus der Materialtabelle
+        material_ID: material.material_ID,
       },
       _sum: {
-        menge: true,  // Summiere die Mengen
+        menge: true,
       },
     });
 
-    const anzahl = bestand._sum.menge || 0;  // Wenn keine Mengen gefunden werden, ist es 0
+    const anzahl = bestand._sum.menge || 0;
 
-    // 3. Antwort mit der Anzahl und den Materialdetails
     return reply.send({
-      material_ID: material.material_ID, // Die material_ID zurückgeben
+      material_ID: material.material_ID,
       category: material.category,
       url: material.url,
       groesse: material.groesse,
@@ -84,4 +80,3 @@ export const getMaterialBestand = async (
     return reply.status(500).send({ error: 'Fehler beim Abrufen des Materialbestands' });
   }
 };
-

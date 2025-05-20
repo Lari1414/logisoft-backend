@@ -3,7 +3,6 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 
 const prisma = new PrismaClient();
 
-// Typdefinition für den Request-Body beim Erstellen eines Lagers
 interface CreateLagerBody {
   bezeichnung: string;
 }
@@ -13,7 +12,6 @@ export const createLager = async (request: FastifyRequest<{ Body: CreateLagerBod
   try {
     const { bezeichnung } = request.body;
 
-    // Neues Lager anlegen
     const neuesLager = await prisma.lager.create({
       data: {
         bezeichnung,
@@ -85,16 +83,14 @@ export const deleteLagerById = async (
       where: { lager_ID: parseInt(id, 10) },
     });
 
-    reply.status(204).send(); // Erfolgreich gelöscht, kein Inhalt zurück
-  } catch (error:any) {
+    reply.status(204).send();
+  } catch (error: any) {
     console.error(error);
 
     if (error.code === 'P2025') {
-      // Prisma-Fehler wenn kein Datensatz gefunden wird
       return reply.status(404).send({ error: 'Lager nicht gefunden' });
     }
 
     reply.status(500).send({ error: 'Fehler beim Löschen des Lagers' });
   }
 };
-

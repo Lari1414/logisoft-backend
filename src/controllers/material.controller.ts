@@ -1,4 +1,3 @@
-// src/controllers/material.controller.ts
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 

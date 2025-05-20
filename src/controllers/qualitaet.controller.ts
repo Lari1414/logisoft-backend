@@ -1,4 +1,3 @@
-// src/controllers/qualität.controller.ts
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 

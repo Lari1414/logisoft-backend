@@ -1,4 +1,3 @@
-// src/controllers/auftraege.controller.ts
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { PrismaClient } from '../../generated/prisma';
 import axios from 'axios';
