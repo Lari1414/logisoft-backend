@@ -172,7 +172,7 @@ export const rohmaterialAbfragen = async (
                     category: farbdaten.category,
                     typ: farbdaten.typ,
                     groesse: farbdaten.groesse,
-                    farbe: {
+                    farbe_json: {
                         equals: farbdaten.farbcode,
                     },
                     lager_ID: rohLager.lager_ID,
@@ -273,7 +273,7 @@ export const fertigmaterialAbfragen = async (
             if (!result[matId]) {
                 result[matId] = {
                     artikelnummer: mat.material_ID,
-                    farbcode: mat.farbe as {
+                    farbcode: mat.farbe_json as {
                         cyan: string;
                         magenta: string;
                         yellow: string;
@@ -334,7 +334,7 @@ export const rohmaterialBereitstellen = async (
                 where: {
                     lager_ID: rohLager.lager_ID,
                     category: bezeichnung,
-                    farbe: {
+                    farbe_json: {
                         equals: farbe, // Suche nach exakt passendem JSON-Code
                     },
                 },

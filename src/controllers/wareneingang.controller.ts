@@ -6,7 +6,9 @@ const prisma = new PrismaClient();
 type EingangBody = {
   materialDetails: {
     category?: string;
-    farbe?: {
+    standardmaterial: boolean;
+    farbe?: string;
+    farbe_json?: {
       cyan: string;
       magenta: string;
       yellow: string;
@@ -54,8 +56,9 @@ export const createEingang = async (
       where: {
         lager_ID: rohmaterialLager.lager_ID,
         category: materialDetails.category,
-        farbe: {
-          equals: materialDetails.farbe
+        farbe: materialDetails.farbe,
+        farbe_json: {
+          equals: materialDetails.farbe_json
         },
         typ: materialDetails.typ,
         groesse: materialDetails.groesse,

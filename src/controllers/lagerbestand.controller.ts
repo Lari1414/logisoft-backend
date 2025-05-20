@@ -1,6 +1,8 @@
 // src/controllers/lagerbestand.controller.ts
+import { cy } from '@faker-js/faker/.';
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { equal } from 'assert';
 
 const prisma = new PrismaClient();
 
@@ -200,7 +202,9 @@ export const einlagernRohmaterial = async (
       menge: number;
       qualitaet_ID: number;
       category: string;
-      farbe: {
+      standardmaterial: boolean;
+      farbe: string;
+      farbe_json: {
         cyan: string;
         magenta: string;
         yellow: string;
@@ -220,6 +224,8 @@ export const einlagernRohmaterial = async (
       menge,
       qualitaet_ID,
       category,
+      standardmaterial,
+      farbe_json,
       farbe,
       typ,
       groesse,
@@ -231,8 +237,10 @@ export const einlagernRohmaterial = async (
       where: {
         lager_ID,
         category,
-        farbe: {
-          equals: farbe
+        farbe,
+        standardmaterial,
+        farbe_json: {
+          equals: farbe_json
         },
         typ,
         groesse
@@ -245,7 +253,11 @@ export const einlagernRohmaterial = async (
         data: {
           lager_ID,
           category,
+          standardmaterial,
           farbe,
+          farbe_json: {
+            equals: farbe_json
+          },
           typ,
           groesse,
           url
@@ -298,7 +310,14 @@ export const einlagernFertigmaterial = async (
     Body: {
       lager_ID: number;
       menge: number;
+      standardmaterial: boolean;
       farbe: string;
+      farbe_json: {
+        cyan: string;
+        magenta: string;
+        yellow: string;
+        balck: string;
+      },
       typ: string;
       groesse: string;
       url?: string;
@@ -311,6 +330,8 @@ export const einlagernFertigmaterial = async (
       lager_ID,
       menge,
       farbe,
+      farbe_json,
+      standardmaterial,
       typ,
       groesse,
       url
@@ -319,8 +340,9 @@ export const einlagernFertigmaterial = async (
     let material = await prisma.material.findFirst({
       where: {
         lager_ID,
-        farbe: {
-          equals: farbe
+        farbe,
+        farbe_json: {
+          equals: farbe_json
         },
         typ,
         groesse
@@ -332,6 +354,10 @@ export const einlagernFertigmaterial = async (
         data: {
           lager_ID,
           farbe,
+          farbe_json: {
+            equals: farbe_json
+          },
+          standardmaterial,
           typ,
           groesse,
           url

@@ -14,9 +14,11 @@ model Material {
   lager_ID    Int
   category    String?
   farbe       String?
+  farbe_json  Json?
   typ         String?
   groesse     String?
   url         String?
+  standardmaterial Boolean
 
   lager          Lager                @relation(fields: [lager_ID], references: [lager_ID])
   eingaenge      Wareneingang[]

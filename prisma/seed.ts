@@ -6,6 +6,7 @@ faker.seed(123); // für konsistente Ergebnisse
 
 async function main() {
   // 1. Lösche alle bestehenden Daten (mit Sicherstellung, dass keine Foreign Key-Fehler auftreten)
+  await prisma.auftrag.deleteMany();
   await prisma.lagerbestand.deleteMany();
   await prisma.wareneingang.deleteMany();
   await prisma.materialbestellung.deleteMany();
@@ -82,7 +83,14 @@ async function main() {
         data: {
           lager_ID: Math.random() < 0.5 ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID,
           category: 'T-Shirt',
+          standardmaterial: faker.helpers.arrayElement([true, false]),
           farbe: faker.color.human(),
+          farbe_json: {
+            cyan: faker.number.int({ min: 0, max: 100 }),
+            magenta: faker.number.int({ min: 0, max: 100 }),
+            yellow: faker.number.int({ min: 0, max: 100 }),
+            black: faker.number.int({ min: 0, max: 100 })
+          },
           typ: faker.helpers.arrayElement(typVarianten),
           groesse: faker.helpers.arrayElement(['S', 'M', 'L', 'XL']),
           url: faker.internet.url(),
@@ -99,10 +107,17 @@ async function main() {
         data: {
           lager_ID: rohmaterialLager.lager_ID,
           category: faker.helpers.arrayElement(categorys),
+          standardmaterial: faker.helpers.arrayElement([true, false]),
           farbe: faker.color.human(),
-          typ: null,  // Typ bleibt null für Rohmaterialien
-          groesse: null,  // Größe bleibt null
-          url: null,  // URL bleibt null
+          farbe_json: {
+            cyan: faker.number.int({ min: 0, max: 100 }),
+            magenta: faker.number.int({ min: 0, max: 100 }),
+            yellow: faker.number.int({ min: 0, max: 100 }),
+            black: faker.number.int({ min: 0, max: 100 })
+          },
+          typ: null,
+          groesse: null,
+          url: null,
         },
       })
     )
