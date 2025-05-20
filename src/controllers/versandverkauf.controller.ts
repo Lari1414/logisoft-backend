@@ -1,5 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { PrismaClient } from '../../generated/prisma';
+import { cmykToHex } from '../utils/color.util';
+
 const prisma = new PrismaClient();
 
 export const getMaterialBestand = async (
@@ -9,12 +11,11 @@ export const getMaterialBestand = async (
       aufdruck: string;
       groesse: string;
       standardmaterial: boolean;
-      farbe: string;
       farbe_json: {
-        cyan: string;
-        magenta: string;
-        yellow: string;
-        balck: string;
+        cyan: number;
+        magenta: number;
+        yellow: number;
+        black: number;
       }
       typ: string;
     };
@@ -22,7 +23,7 @@ export const getMaterialBestand = async (
   reply: FastifyReply
 ) => {
   try {
-    const { category, aufdruck, groesse, farbe, farbe_json, typ, standardmaterial } = req.body;
+    const { category, aufdruck, groesse, farbe_json, typ, standardmaterial } = req.body;
 
     let material = await prisma.material.findFirst({
       where: {
@@ -30,7 +31,7 @@ export const getMaterialBestand = async (
         url: aufdruck,
         groesse: groesse,
         farbe_json: {
-          equals: farbe
+          equals: farbe_json
         },
         typ: typ,
       },
@@ -38,6 +39,9 @@ export const getMaterialBestand = async (
 
     if (!material) {
       const istUrlGueltig = typeof aufdruck === 'string' && aufdruck.trim() !== '';
+
+      const hexCode = cmykToHex(farbe_json);
+
 
       material = await prisma.material.create({
         data: {
@@ -49,7 +53,7 @@ export const getMaterialBestand = async (
           },
           url: istUrlGueltig ? aufdruck : null,
           groesse: groesse,
-          farbe: farbe,
+          farbe: hexCode,
           typ: typ,
         },
       });

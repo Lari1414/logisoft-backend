@@ -1,6 +1,7 @@
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { startOfDay, endOfDay } from 'date-fns';
+import { cmykToHex } from '../utils/color.util';
 
 const prisma = new PrismaClient();
 
@@ -8,12 +9,11 @@ type EingangBody = {
   materialDetails: {
     category?: string;
     standardmaterial: boolean;
-    farbe?: string;
-    farbe_json?: {
-      cyan: string;
-      magenta: string;
-      yellow: string;
-      black: string;
+    farbe_json: {
+      cyan: number;
+      magenta: number;
+      yellow: number;
+      black: number;
     };
     typ?: string;
     groesse?: string;
@@ -56,18 +56,20 @@ export const createEingang = async (
       where: {
         lager_ID: rohmaterialLager.lager_ID,
         category: materialDetails.category,
-        farbe: materialDetails.farbe,
         farbe_json: { equals: materialDetails.farbe_json },
         typ: materialDetails.typ,
         groesse: materialDetails.groesse,
       },
     });
 
+    const hexCode = cmykToHex(materialDetails.farbe_json);
+
     if (!material) {
       material = await prisma.material.create({
         data: {
           ...materialDetails,
           lager_ID: rohmaterialLager.lager_ID,
+          farbe: hexCode
         },
       });
     }

@@ -1,5 +1,6 @@
 import { PrismaClient } from '../generated/prisma';
 import { faker } from '@faker-js/faker';
+import { cmykToHex } from '../src/utils/color.util';
 
 const prisma = new PrismaClient();
 faker.seed(123); // für konsistente Ergebnisse
@@ -78,49 +79,55 @@ async function main() {
   // 5. Erzeuge 5 Materialien mit festen Typen und Kategorie "T-Shirt"
   const typVarianten = ['V-Ausschnitt', 'Oversize', 'Top', 'Sport', 'Rundhals'];
   const materialien = await Promise.all(
-    Array.from({ length: 5 }).map(() =>
-      prisma.material.create({
+    Array.from({ length: 5 }).map(() => {
+      const farbeJson = {
+        cyan: faker.number.int({ min: 0, max: 100 }),
+        magenta: faker.number.int({ min: 0, max: 100 }),
+        yellow: faker.number.int({ min: 0, max: 100 }),
+        black: faker.number.int({ min: 0, max: 100 }),
+      };
+      const hexCode = cmykToHex(farbeJson);
+
+      return prisma.material.create({
         data: {
           lager_ID: Math.random() < 0.5 ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID,
           category: 'T-Shirt',
           standardmaterial: faker.helpers.arrayElement([true, false]),
-          farbe: faker.color.human(),
-          farbe_json: {
-            cyan: faker.number.int({ min: 0, max: 100 }),
-            magenta: faker.number.int({ min: 0, max: 100 }),
-            yellow: faker.number.int({ min: 0, max: 100 }),
-            black: faker.number.int({ min: 0, max: 100 })
-          },
+          farbe: hexCode,
+          farbe_json: farbeJson,
           typ: faker.helpers.arrayElement(typVarianten),
           groesse: faker.helpers.arrayElement(['S', 'M', 'L', 'XL']),
           url: faker.internet.url(),
         },
-      })
-    )
+      });
+    })
   );
 
   // 6. Erzeuge 3 Rohmaterialien
   const categorys = ['Verpackung', 'Farbe', 'Druckfolie'];
   const rohmaterialien = await Promise.all(
-    Array.from({ length: 3 }).map(() =>
-      prisma.material.create({
+    Array.from({ length: 3 }).map(() => {
+      const farbeJson = {
+        cyan: faker.number.int({ min: 0, max: 100 }),
+        magenta: faker.number.int({ min: 0, max: 100 }),
+        yellow: faker.number.int({ min: 0, max: 100 }),
+        black: faker.number.int({ min: 0, max: 100 }),
+      };
+      const hexCode = cmykToHex(farbeJson);
+
+      return prisma.material.create({
         data: {
           lager_ID: rohmaterialLager.lager_ID,
           category: faker.helpers.arrayElement(categorys),
           standardmaterial: faker.helpers.arrayElement([true, false]),
-          farbe: faker.color.human(),
-          farbe_json: {
-            cyan: faker.number.int({ min: 0, max: 100 }),
-            magenta: faker.number.int({ min: 0, max: 100 }),
-            yellow: faker.number.int({ min: 0, max: 100 }),
-            black: faker.number.int({ min: 0, max: 100 })
-          },
+          farbe: hexCode,
+          farbe_json: farbeJson,
           typ: null,
           groesse: null,
           url: null,
         },
-      })
-    )
+      });
+    })
   );
 
   // 7. Erzeuge Qualitäten

@@ -1,5 +1,6 @@
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { cmykToHex } from '../utils/color.util';
 
 const prisma = new PrismaClient();
 
@@ -7,12 +8,11 @@ interface CreateMaterialBody {
   lager_ID: number;
   category?: string;
   standardmaterial: boolean;
-  farbe?: string;
   farbe_json: {
-    cyan: string;
-    magenta: string;
-    yellow: string;
-    balck: string;
+    cyan: number;
+    magenta: number;
+    yellow: number;
+    black: number;
   }
   typ?: string;
   groesse?: string;
@@ -22,13 +22,15 @@ interface CreateMaterialBody {
 // POST: Material erstellen
 export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialBody }>, reply: FastifyReply) => {
   try {
-    const { lager_ID, category, farbe, typ, groesse, url, farbe_json, standardmaterial } = req.body;
+    const { lager_ID, category, typ, groesse, url, farbe_json, standardmaterial } = req.body;
+
+    const hexCode = cmykToHex(farbe_json);
 
     const newMaterial = await prisma.material.create({
       data: {
         lager_ID,
         category,
-        farbe,
+        farbe: hexCode,
         farbe_json: {
           equals: farbe_json,
         },
