@@ -85,6 +85,7 @@ export async function setzeAuftragAufAbholbereitHandler(
     return reply.status(500).send({ error: 'Auftrag konnte nicht aktualisiert werden' });
   }
 }
+
 export async function setzeAuftragAufAbholbereit(
   req: FastifyRequest<{
     Body: {
@@ -125,7 +126,6 @@ export async function setzeAuftragAufAbholbereit(
     return reply.status(500).send({ error: 'Auftrag konnte nicht aktualisiert werden' });
   }
 }
-
 
 // POST: Material einlagern
 export const materialEinlagern = async (
@@ -278,6 +278,42 @@ export const getAuftraege = async (_req: FastifyRequest, reply: FastifyReply) =>
       where: {
         status: {
           in: ["Einlagerung angefordert", "Auslagerung angefordert"],
+        },
+      }
+    });
+
+    return reply.send(auftraege);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Aufträge' });
+  }
+};
+
+// GET: Aufträge mit Status "Einlagerung angefordert"
+export const getEinlagerungsAuftraege = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const auftraege = await prisma.auftrag.findMany({
+      where: {
+        status: {
+          in: ["Einlagerung angefordert"],
+        },
+      }
+    });
+
+    return reply.send(auftraege);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Aufträge' });
+  }
+};
+
+// GET: Aufträge mit Status "Auslagerung angefordert"
+export const getAuslagerungsAuftraege = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const auftraege = await prisma.auftrag.findMany({
+      where: {
+        status: {
+          in: ["Auslagerung angefordert"],
         },
       }
     });
