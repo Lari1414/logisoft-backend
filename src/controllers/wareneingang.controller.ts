@@ -201,6 +201,38 @@ export const updateEingaengeSperren = async (
   }
 };
 
+// PUT: Wareneingang sperren
+export const updateEingaengeEntsperren = async (
+  req: FastifyRequest<{ Body: { ids: number[] } }>,
+  reply: FastifyReply
+) => {
+  try {
+    const ids = req.body.ids;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return reply.status(400).send({ error: 'Keine gültigen IDs übergeben' });
+    }
+
+    const result = await prisma.wareneingang.updateMany({
+      where: {
+        eingang_ID: { in: ids },
+      },
+      data: {
+        status: 'eingetroffen',
+      },
+    });
+
+    if (result.count === 0) {
+      return reply.status(404).send({ error: 'Keine passenden Einträge gefunden' });
+    }
+
+    reply.send({ updatedCount: result.count });
+  } catch (err) {
+    console.error(err);
+    reply.status(500).send({ error: 'Fehler beim Aktualisieren' });
+  }
+};
+
 // PUT: Wareneingang aktualisieren
 // export const updateEingangById = async (req: FastifyRequest<{ Params: { id: string }, Body: Partial<EingangBody> }>, reply: FastifyReply) => {
 //   try {
