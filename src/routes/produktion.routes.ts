@@ -1,7 +1,11 @@
 import { FastifyInstance } from 'fastify';
 import {
-  fertigmaterialAbfragen, produktionBestelltMaterial, rohmaterialAbfragen,
-  rohmaterialBereitstellen, rohmaterialZurueckgeben, fertigmaterialAnliefern
+  fertigmaterialAbfragen,
+  produktionBestelltMaterial,
+  rohmaterialAbfragen,
+  rohmaterialBereitstellen,
+  rohmaterialZurueckgeben,
+  fertigmaterialAnliefern
 } from '../controllers/produktion.controller';
 
 export default async function produktionRouten(app: FastifyInstance) {

@@ -1,12 +1,20 @@
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { startOfDay, endOfDay } from 'date-fns';
+
 const prisma = new PrismaClient();
 
 type EingangBody = {
   materialDetails: {
     category?: string;
+    standardmaterial: boolean;
     farbe?: string;
+    farbe_json?: {
+      cyan: string;
+      magenta: string;
+      yellow: string;
+      black: string;
+    };
     typ?: string;
     groesse?: string;
   };
@@ -22,7 +30,7 @@ type EingangBody = {
   lieferdatum: string;
 };
 
-// POST: Neuer Wareneingang
+// Erstellt einen neuen Wareneingang
 export const createEingang = async (
   req: FastifyRequest<{ Body: EingangBody }>,
   reply: FastifyReply
@@ -33,7 +41,7 @@ export const createEingang = async (
       qualitaet,
       materialbestellung_ID,
       menge,
-      lieferdatum
+      lieferdatum,
     } = req.body;
 
     const rohmaterialLager = await prisma.lager.findFirst({
@@ -44,12 +52,12 @@ export const createEingang = async (
       return reply.status(404).send({ error: 'Rohmateriallager nicht gefunden' });
     }
 
-    // 1. MATERIAL: prüfen oder erstellen
     let material = await prisma.material.findFirst({
       where: {
         lager_ID: rohmaterialLager.lager_ID,
         category: materialDetails.category,
         farbe: materialDetails.farbe,
+        farbe_json: { equals: materialDetails.farbe_json },
         typ: materialDetails.typ,
         groesse: materialDetails.groesse,
       },
@@ -64,7 +72,6 @@ export const createEingang = async (
       });
     }
 
-    // 2. QUALITÄT: prüfen oder erstellen
     let qualitaetEntry = null;
     if (qualitaet) {
       qualitaetEntry = await prisma.qualitaet.findFirst({
@@ -78,19 +85,16 @@ export const createEingang = async (
       });
 
       if (!qualitaetEntry) {
-        qualitaetEntry = await prisma.qualitaet.create({
-          data: qualitaet,
-        });
+        qualitaetEntry = await prisma.qualitaet.create({ data: qualitaet });
       }
     }
 
-    // 3. WARENEINGANG anlegen
     const eingang = await prisma.wareneingang.create({
       data: {
         material_ID: material.material_ID,
         materialbestellung_ID,
         menge,
-        status: "eingetroffen",
+        status: 'eingetroffen',
         lieferdatum: new Date(lieferdatum),
         qualitaet_ID: qualitaetEntry?.qualitaet_ID,
       },
@@ -99,18 +103,15 @@ export const createEingang = async (
     return reply.status(201).send(eingang);
   } catch (err) {
     console.error(err);
-    return reply.status(500).send({ error: "Fehler beim Erstellen des Wareneingangs" });
+    return reply.status(500).send({ error: 'Fehler beim Erstellen des Wareneingangs' });
   }
 };
 
-// GET: Alle Wareneingänge
+// Gibt alle Wareneingänge zurück
 export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const result = await prisma.wareneingang.findMany({
-      include: {
-        material: true,
-        materialbestellung: true,
-      },
+      include: { material: true, materialbestellung: true },
     });
     reply.send(result);
   } catch (err) {
@@ -119,19 +120,18 @@ export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply)
   }
 };
 
-
+// Gibt alle heutigen Wareneingänge zurück
 export const getAllEingaengeHeute = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const now = new Date();
     const result = await prisma.wareneingang.findMany({
       where: {
         lieferdatum: {
-          gte: startOfDay(now), // >= heute um 00:00 Uhr
-          lte: endOfDay(now),   // <= heute um 23:59:59
+          gte: startOfDay(now),
+          lte: endOfDay(now),
         },
       },
     });
-
     reply.send(result);
   } catch (err) {
     console.error(err);
@@ -139,19 +139,21 @@ export const getAllEingaengeHeute = async (_req: FastifyRequest, reply: FastifyR
   }
 };
 
-// GET: Einzelner Wareneingang
-export const getEingangById = async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+// Gibt einen bestimmten Wareneingang zurück
+export const getEingangById = async (
+  req: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) => {
   try {
     const eingang = await prisma.wareneingang.findUnique({
       where: { eingang_ID: parseInt(req.params.id, 10) },
-      include: {
-        material: true,
-        materialbestellung: true,
-      },
+      include: { material: true, materialbestellung: true },
     });
+
     if (!eingang) {
       return reply.status(404).send({ error: 'Wareneingang nicht gefunden' });
     }
+
     reply.send(eingang);
   } catch (err) {
     console.error(err);
@@ -159,7 +161,7 @@ export const getEingangById = async (req: FastifyRequest<{ Params: { id: string 
   }
 };
 
-// PUT: Wareneingang sperren
+// Sperrt ausgewählte Wareneingänge
 export const updateEingaengeSperren = async (
   req: FastifyRequest<{ Body: { ids: number[] } }>,
   reply: FastifyReply
@@ -167,17 +169,13 @@ export const updateEingaengeSperren = async (
   try {
     const ids = req.body.ids;
 
-    if (!Array.isArray(ids) || ids.length === 0) {
+    if (!ids?.length) {
       return reply.status(400).send({ error: 'Keine gültigen IDs übergeben' });
     }
 
     const result = await prisma.wareneingang.updateMany({
-      where: {
-        eingang_ID: { in: ids },
-      },
-      data: {
-        status: 'gesperrt',
-      },
+      where: { eingang_ID: { in: ids } },
+      data: { status: 'gesperrt' },
     });
 
     if (result.count === 0) {
@@ -191,26 +189,39 @@ export const updateEingaengeSperren = async (
   }
 };
 
-// PUT: Wareneingang aktualisieren
-// export const updateEingangById = async (req: FastifyRequest<{ Params: { id: string }, Body: Partial<EingangBody> }>, reply: FastifyReply) => {
-//   try {
-//     const id = parseInt(req.params.id, 10);
-//     const updated = await prisma.wareneingang.update({
-//       where: { eingang_ID: id },
-//       data: req.body,
-//     });
-//     reply.send(updated);
-//   } catch (err: any) {
-//     console.error(err);
-//     if (err.code === 'P2025') {
-//       return reply.status(404).send({ error: 'Wareneingang nicht gefunden' });
-//     }
-//     reply.status(500).send({ error: 'Fehler beim Aktualisieren' });
-//   }
-// };
+// Entsperrt ausgewählte Wareneingänge
+export const updateEingaengeEntsperren = async (
+  req: FastifyRequest<{ Body: { ids: number[] } }>,
+  reply: FastifyReply
+) => {
+  try {
+    const ids = req.body.ids;
 
-// DELETE: Wareneingang löschen
-export const deleteEingangById = async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    if (!ids?.length) {
+      return reply.status(400).send({ error: 'Keine gültigen IDs übergeben' });
+    }
+
+    const result = await prisma.wareneingang.updateMany({
+      where: { eingang_ID: { in: ids } },
+      data: { status: 'eingetroffen' },
+    });
+
+    if (result.count === 0) {
+      return reply.status(404).send({ error: 'Keine passenden Einträge gefunden' });
+    }
+
+    reply.send({ updatedCount: result.count });
+  } catch (err) {
+    console.error(err);
+    reply.status(500).send({ error: 'Fehler beim Aktualisieren' });
+  }
+};
+
+// Löscht einen Wareneingang
+export const deleteEingangById = async (
+  req: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) => {
   try {
     const id = parseInt(req.params.id, 10);
     await prisma.wareneingang.delete({ where: { eingang_ID: id } });
@@ -224,16 +235,15 @@ export const deleteEingangById = async (req: FastifyRequest<{ Params: { id: stri
   }
 };
 
-
-
-// POST: Wareneingang einlagern
+// Lagert Wareneingänge ein
 export const wareneingangEingelagern = async (
   req: FastifyRequest<{ Body: { ids: number[] } }>,
   reply: FastifyReply
 ) => {
   try {
     const ids = req.body.ids;
-    if (!Array.isArray(ids) || ids.length === 0) {
+
+    if (!ids?.length) {
       return reply.status(400).send({ error: 'Keine gültigen IDs übergeben' });
     }
 
@@ -246,7 +256,6 @@ export const wareneingangEingelagern = async (
     }
 
     const rohmaterialLagerId = rohmaterialLager.lager_ID;
-
     let erfolgreichEingelagert = 0;
     let übersprungen = 0;
 
@@ -255,9 +264,7 @@ export const wareneingangEingelagern = async (
         where: { eingang_ID: id },
       });
 
-      if (!wareneingang) continue;
-
-      if (wareneingang.status === 'gesperrt') {
+      if (!wareneingang || wareneingang.status === 'gesperrt') {
         übersprungen++;
         continue;
       }
@@ -274,20 +281,43 @@ export const wareneingangEingelagern = async (
 
       await prisma.wareneingang.update({
         where: { eingang_ID: id },
-        data: {
-          status: 'eingelagert',
-        },
+        data: { status: 'eingelagert' },
       });
 
       erfolgreichEingelagert++;
     }
 
-    return reply.send({
-      erfolgreichEingelagert,
-      übersprungen,
-    });
+    reply.send({ erfolgreichEingelagert, übersprungen });
   } catch (err) {
     console.error(err);
-    return reply.status(500).send({ error: 'Fehler beim Einlagern' });
+    reply.status(500).send({ error: 'Fehler beim Einlagern' });
+  }
+};
+
+// Wareneingang aktualisieren
+export const updateEingangById = async (
+  req: FastifyRequest<{ Params: { id: string }, Body: Partial<EingangBody> }>,
+  reply: FastifyReply
+) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    const dataToUpdate: any = {};
+    if (req.body.menge !== undefined) dataToUpdate.menge = req.body.menge;
+    if (req.body.lieferdatum !== undefined) dataToUpdate.lieferdatum = new Date(req.body.lieferdatum);
+    if (req.body.materialbestellung_ID !== undefined) dataToUpdate.materialbestellung_ID = req.body.materialbestellung_ID;
+
+    const updated = await prisma.wareneingang.update({
+      where: { eingang_ID: id },
+      data: dataToUpdate,
+    });
+
+    reply.send(updated);
+  } catch (err: any) {
+    console.error(err);
+    if (err.code === 'P2025') {
+      return reply.status(404).send({ error: 'Wareneingang nicht gefunden' });
+    }
+    reply.status(500).send({ error: 'Fehler beim Aktualisieren' });
   }
 };

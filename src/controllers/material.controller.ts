@@ -7,7 +7,14 @@ const prisma = new PrismaClient();
 interface CreateMaterialBody {
   lager_ID: number;
   category?: string;
+  standardmaterial: boolean;
   farbe?: string;
+  farbe_json: {
+    cyan: string;
+    magenta: string;
+    yellow: string;
+    balck: string;
+  }
   typ?: string;
   groesse?: string;
   url?: string;
@@ -16,13 +23,17 @@ interface CreateMaterialBody {
 // POST: Material erstellen
 export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialBody }>, reply: FastifyReply) => {
   try {
-    const { lager_ID, category, farbe, typ, groesse, url } = req.body;
+    const { lager_ID, category, farbe, typ, groesse, url, farbe_json, standardmaterial } = req.body;
 
     const newMaterial = await prisma.material.create({
       data: {
         lager_ID,
         category,
         farbe,
+        farbe_json: {
+          equals: farbe_json,
+        },
+        standardmaterial,
         typ,
         groesse,
         url,

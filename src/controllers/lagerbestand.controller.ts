@@ -1,4 +1,3 @@
-// src/controllers/lagerbestand.controller.ts
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
@@ -9,7 +8,7 @@ interface CreateLagerbestandBody {
   lager_ID: number;
   material_ID: number;
   menge: number;
-  qualitaet_ID:number;
+  qualitaet_ID: number;
 }
 
 // POST: Lagerbestand anlegen
@@ -18,87 +17,63 @@ export const createLagerbestand = async (
   reply: FastifyReply
 ) => {
   try {
-    const { eingang_ID, lager_ID, material_ID, menge,qualitaet_ID } = req.body;
-
-    const neuerEintrag = await prisma.lagerbestand.create({
-      data: {
-        eingang_ID,
-        lager_ID,
-        material_ID,
-        menge,
-        qualitaet_ID
-      },
-    });
-
+    const neuerEintrag = await prisma.lagerbestand.create({ data: req.body });
     return reply.status(201).send(neuerEintrag);
   } catch (error) {
-    console.error(error);
+    console.error('Fehler bei createLagerbestand:', error);
     return reply.status(500).send({ error: 'Fehler beim Erstellen des Lagerbestands' });
   }
 };
 
-// GET: Alle Lagerbestände abrufen
+// GET: Alle Lagerbestände
 export const getAllLagerbestaende = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const eintraege = await prisma.lagerbestand.findMany({
-      include: {
-        material: true,
-        qualitaet: true
-      }});
+      include: { material: true, qualitaet: true },
+    });
     return reply.send(eintraege);
   } catch (error) {
-    console.error(error);
-    return reply.status(500).send({ error: 'Fehler beim Abrufen der Lagerbestände' });
-  }
-};
-export const getAllLagerbestaendeRoh = async (_req: FastifyRequest, reply: FastifyReply) => {
-  try {
-    const eintraege = await prisma.lagerbestand.findMany({
-      where: {
-        lager_ID: 1,
-        menge: {
-          gt: 0
-        }
-      },
-      include: {
-        material: true,
-        qualitaet: true
-      }});
-    return reply.send(eintraege);
-  } catch (error) {
-    console.error(error);
-    return reply.status(500).send({ error: 'Fehler beim Abrufen der Lagerbestände' });
-  }
-};
-export const getAllLagerbestaendeFertig = async (_req: FastifyRequest, reply: FastifyReply) => {
-  try {
-    const eintraege = await prisma.lagerbestand.findMany({
-      where: {
-        lager_ID: 2,
-        menge: {
-          gt: 0
-        }
-      },
-      include: {
-        material: true
-      }});
-    return reply.send(eintraege);
-  } catch (error) {
-    console.error(error);
+    console.error('Fehler bei getAllLagerbestaende:', error);
     return reply.status(500).send({ error: 'Fehler beim Abrufen der Lagerbestände' });
   }
 };
 
-// GET: Einzelnen Lagerbestand abrufen
+// GET: Lagerbestände mit Lager 1 und Menge > 0
+export const getAllLagerbestaendeRoh = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const eintraege = await prisma.lagerbestand.findMany({
+      where: { lager_ID: 1, menge: { gt: 0 } },
+      include: { material: true, qualitaet: true },
+    });
+    return reply.send(eintraege);
+  } catch (error) {
+    console.error('Fehler bei getAllLagerbestaendeRoh:', error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Lagerbestände' });
+  }
+};
+
+// GET: Lagerbestände mit Lager 2 und Menge > 0
+export const getAllLagerbestaendeFertig = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const eintraege = await prisma.lagerbestand.findMany({
+      where: { lager_ID: 2, menge: { gt: 0 } },
+      include: { material: true },
+    });
+    return reply.send(eintraege);
+  } catch (error) {
+    console.error('Fehler bei getAllLagerbestaendeFertig:', error);
+    return reply.status(500).send({ error: 'Fehler beim Abrufen der Lagerbestände' });
+  }
+};
+
+// GET: Einzelnen Lagerbestand
 export const getLagerbestandById = async (
   req: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply
 ) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const bestand = await prisma.lagerbestand.findUnique({
-      where: { lagerbestand_ID: id },
-    });
+    const bestand = await prisma.lagerbestand.findUnique({ where: { lagerbestand_ID: id } });
 
     if (!bestand) {
       return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
@@ -106,7 +81,7 @@ export const getLagerbestandById = async (
 
     return reply.send(bestand);
   } catch (error) {
-    console.error(error);
+    console.error('Fehler bei getLagerbestandById:', error);
     return reply.status(500).send({ error: 'Fehler beim Abrufen des Lagerbestands' });
   }
 };
@@ -118,16 +93,14 @@ export const updateLagerbestandById = async (
 ) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const data = req.body;
-
     const updated = await prisma.lagerbestand.update({
       where: { lagerbestand_ID: id },
-      data,
+      data: req.body,
     });
 
     return reply.send(updated);
   } catch (error: any) {
-    console.error(error);
+    console.error('Fehler bei updateLagerbestandById:', error);
     if (error.code === 'P2025') {
       return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
     }
@@ -142,13 +115,10 @@ export const deleteLagerbestandById = async (
 ) => {
   try {
     const id = parseInt(req.params.id, 10);
-    await prisma.lagerbestand.delete({
-      where: { lagerbestand_ID: id },
-    });
-
+    await prisma.lagerbestand.delete({ where: { lagerbestand_ID: id } });
     return reply.status(204).send();
   } catch (error: any) {
-    console.error(error);
+    console.error('Fehler bei deleteLagerbestandById:', error);
     if (error.code === 'P2025') {
       return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
     }
@@ -156,17 +126,14 @@ export const deleteLagerbestandById = async (
   }
 };
 
+// POST: Auslagern
 export const auslagernMaterial = async (
   req: FastifyRequest<{ Body: { lagerbestand_ID: number; menge: number } }>,
   reply: FastifyReply
 ) => {
   try {
     const { lagerbestand_ID, menge } = req.body;
-
-    // Lagerbestandseintrag mit der lagerbestand_ID abrufen
-    const bestand = await prisma.lagerbestand.findUnique({
-      where: { lagerbestand_ID },
-    });
+    const bestand = await prisma.lagerbestand.findUnique({ where: { lagerbestand_ID } });
 
     if (!bestand) {
       return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
@@ -176,7 +143,6 @@ export const auslagernMaterial = async (
       return reply.status(400).send({ error: 'Nicht genügend Material im Lagerbestand' });
     }
 
-    // Menge im Lagerbestand reduzieren
     await prisma.lagerbestand.update({
       where: { lagerbestand_ID },
       data: { menge: bestand.menge - menge },
@@ -184,11 +150,12 @@ export const auslagernMaterial = async (
 
     return reply.status(200).send({ message: 'Material erfolgreich ausgelagert' });
   } catch (error) {
-    console.error(error);
+    console.error('Fehler bei auslagernMaterial:', error);
     return reply.status(500).send({ error: 'Fehler beim Auslagern des Materials' });
   }
 };
 
+// POST: Einlagern Rohmaterial
 export const einlagernRohmaterial = async (
   req: FastifyRequest<{
     Body: {
@@ -197,7 +164,9 @@ export const einlagernRohmaterial = async (
       menge: number;
       qualitaet_ID: number;
       category: string;
+      standardmaterial: boolean;
       farbe: string;
+      farbe_json: { cyan: string; magenta: string; yellow: string; black: string };
       typ: string;
       groesse: string;
       url?: string;
@@ -212,30 +181,34 @@ export const einlagernRohmaterial = async (
       menge,
       qualitaet_ID,
       category,
+      standardmaterial,
       farbe,
+      farbe_json,
       typ,
       groesse,
       url
     } = req.body;
 
-    // Schritt 1: Existierendes Material suchen oder neues Material anlegen
     let material = await prisma.material.findFirst({
       where: {
         lager_ID,
         category,
         farbe,
+        standardmaterial,
+        farbe_json: { equals: farbe_json },
         typ,
         groesse
       }
     });
 
-    // Falls kein Material gefunden wird, neues Material anlegen
     if (!material) {
       material = await prisma.material.create({
         data: {
           lager_ID,
           category,
           farbe,
+          standardmaterial,
+          farbe_json,
           typ,
           groesse,
           url
@@ -243,51 +216,45 @@ export const einlagernRohmaterial = async (
       });
     }
 
-    // Schritt 2: Lagerbestand prüfen
-    const vorhandenerBestand = await prisma.lagerbestand.findFirst({
-      where: {
-        material_ID: material.material_ID,
-        lager_ID,
-        qualitaet_ID
-      }
+    const bestand = await prisma.lagerbestand.findFirst({
+      where: { material_ID: material.material_ID, lager_ID, qualitaet_ID }
     });
 
-    if (vorhandenerBestand) {
-      // Menge erhöhen, wenn der Bestand existiert
+    if (bestand) {
       const aktualisiert = await prisma.lagerbestand.update({
-        where: { lagerbestand_ID: vorhandenerBestand.lagerbestand_ID },
-        data: {
-          menge: vorhandenerBestand.menge + menge
-        }
+        where: { lagerbestand_ID: bestand.lagerbestand_ID },
+        data: { menge: bestand.menge + menge }
       });
 
       return reply.status(200).send(aktualisiert);
     } else {
-      // Neuen Lagerbestand anlegen
-      const neuerEintrag = await prisma.lagerbestand.create({
+      const neu = await prisma.lagerbestand.create({
         data: {
           eingang_ID,
           lager_ID,
-          material_ID: material.material_ID, // Material ID muss korrekt gesetzt werden
+          material_ID: material.material_ID,
           menge,
           qualitaet_ID
         }
       });
 
-      return reply.status(201).send(neuerEintrag);
+      return reply.status(201).send(neu);
     }
-
   } catch (error) {
-    console.error(error);
+    console.error('Fehler bei einlagernRohmaterial:', error);
     return reply.status(500).send({ error: 'Fehler beim Einlagern des Materials', details: error });
   }
 };
+
+// POST: Einlagern Fertigmaterial
 export const einlagernFertigmaterial = async (
   req: FastifyRequest<{
     Body: {
       lager_ID: number;
       menge: number;
+      standardmaterial: boolean;
       farbe: string;
+      farbe_json: { cyan: string; magenta: string; yellow: string; black: string };
       typ: string;
       groesse: string;
       url?: string;
@@ -300,6 +267,8 @@ export const einlagernFertigmaterial = async (
       lager_ID,
       menge,
       farbe,
+      farbe_json,
+      standardmaterial,
       typ,
       groesse,
       url
@@ -309,6 +278,7 @@ export const einlagernFertigmaterial = async (
       where: {
         lager_ID,
         farbe,
+        farbe_json: { equals: farbe_json },
         typ,
         groesse
       }
@@ -319,6 +289,8 @@ export const einlagernFertigmaterial = async (
         data: {
           lager_ID,
           farbe,
+          farbe_json,
+          standardmaterial,
           typ,
           groesse,
           url
@@ -326,24 +298,19 @@ export const einlagernFertigmaterial = async (
       });
     }
 
-    const vorhandenerBestand = await prisma.lagerbestand.findFirst({
-      where: {
-        material_ID: material.material_ID,
-        lager_ID
-      }
+    const bestand = await prisma.lagerbestand.findFirst({
+      where: { material_ID: material.material_ID, lager_ID }
     });
 
-    if (vorhandenerBestand) {
+    if (bestand) {
       const aktualisiert = await prisma.lagerbestand.update({
-        where: { lagerbestand_ID: vorhandenerBestand.lagerbestand_ID },
-        data: {
-          menge: vorhandenerBestand.menge + menge
-        }
+        where: { lagerbestand_ID: bestand.lagerbestand_ID },
+        data: { menge: bestand.menge + menge }
       });
 
       return reply.status(200).send(aktualisiert);
     } else {
-      const neuerEintrag = await prisma.lagerbestand.create({
+      const neu = await prisma.lagerbestand.create({
         data: {
           lager_ID,
           material_ID: material.material_ID,
@@ -351,11 +318,10 @@ export const einlagernFertigmaterial = async (
         }
       });
 
-      return reply.status(201).send(neuerEintrag);
+      return reply.status(201).send(neu);
     }
   } catch (error) {
-    console.error(error);
+    console.error('Fehler bei einlagernFertigmaterial:', error);
     return reply.status(500).send({ error: 'Fehler beim Einlagern des Fertigmaterials', details: error });
   }
 };
-

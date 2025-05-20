@@ -1,20 +1,28 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { PrismaClient } from '../../generated/prisma';
 const prisma = new PrismaClient();
+
 export const getMaterialBestand = async (
   req: FastifyRequest<{
     Body: {
       category: string;
-      aufdruck: string;  // Dies ist die URL
+      aufdruck: string;
       groesse: string;
+      standardmaterial: boolean;
       farbe: string;
+      farbe_json: {
+        cyan: string;
+        magenta: string;
+        yellow: string;
+        balck: string;
+      }
       typ: string;
     };
   }>,
   reply: FastifyReply
 ) => {
   try {
-    const {category, aufdruck, groesse, farbe, typ } = req.body;
+    const { category, aufdruck, groesse, farbe, farbe_json, typ, standardmaterial } = req.body;
 
     // 1. Suche das passende Material in der Materialtabelle
     let material = await prisma.material.findFirst({
@@ -22,7 +30,9 @@ export const getMaterialBestand = async (
         category: category,
         url: aufdruck,
         groesse: groesse,
-        farbe: farbe,
+        farbe_json: {
+          equals: farbe
+        },
         typ: typ,
       },
     });
@@ -35,6 +45,10 @@ export const getMaterialBestand = async (
         data: {
           lager_ID: istUrlGueltig ? 2 : 1,
           category: category,
+          standardmaterial: standardmaterial,
+          farbe_json: {
+            equals: farbe_json,
+          },
           url: istUrlGueltig ? aufdruck : null,
           groesse: groesse,
           farbe: farbe,
@@ -42,7 +56,6 @@ export const getMaterialBestand = async (
         },
       });
     }
-
 
     // 2. Berechne die Gesamtmenge des Materials im Lagerbestand
     const bestand = await prisma.lagerbestand.aggregate({
@@ -60,7 +73,7 @@ export const getMaterialBestand = async (
     return reply.send({
       material_ID: material.material_ID, // Die material_ID zurückgeben
       category: material.category,
-      url:  material.url ,
+      url: material.url,
       groesse: material.groesse,
       farbe: material.farbe,
       typ: material.typ,

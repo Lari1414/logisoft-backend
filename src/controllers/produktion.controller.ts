@@ -1,7 +1,15 @@
+import { DateEntryDefinition } from '@faker-js/faker/.';
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
 const prisma = new PrismaClient();
+
+type Farbe = {
+    cyan: string;
+    magenta: string;
+    yellow: string;
+    black: string;
+};
 
 export const produktionBestelltMaterial = async (
     _req: FastifyRequest<{
@@ -133,7 +141,12 @@ export const rohmaterialAbfragen = async (
     req: FastifyRequest<{
         Body: {
             category: string;
-            farbe: string;
+            farbcode: {
+                cyan: string;
+                magenta: string;
+                yellow: string;
+                black: string;
+            };
             typ: string;
             groesse: string;
         }[];
@@ -142,16 +155,6 @@ export const rohmaterialAbfragen = async (
 ) => {
     try {
         const anfragen = req.body;
-
-        if (
-            !Array.isArray(anfragen) ||
-            anfragen.some(
-                (item) =>
-                    !item.category || !item.farbe || !item.typ || !item.groesse
-            )
-        ) {
-            return reply.status(400).send({ error: 'Ungültiges Anfrageformat' });
-        }
 
         const rohLager = await prisma.lager.findFirst({
             where: { bezeichnung: 'Rohmateriallager' },
@@ -163,13 +166,15 @@ export const rohmaterialAbfragen = async (
 
         const ergebnisse = [];
 
-        for (const { category, farbe, typ, groesse } of anfragen) {
+        for (const farbdaten of anfragen) {
             const material = await prisma.material.findFirst({
                 where: {
-                    category,
-                    farbe,
-                    typ,
-                    groesse,
+                    category: farbdaten.category,
+                    typ: farbdaten.typ,
+                    groesse: farbdaten.groesse,
+                    farbe_json: {
+                        equals: farbdaten.farbcode,
+                    },
                     lager_ID: rohLager.lager_ID,
                 },
             });
@@ -203,7 +208,9 @@ export const rohmaterialAbfragen = async (
         return reply.send(ergebnisse);
     } catch (error) {
         console.error('Fehler bei Rohmaterial-Abfrage:', error);
-        return reply.status(500).send({ error: 'Interner Serverfehler bei Rohmaterial-Abfrage' });
+        return reply.status(500).send({
+            error: 'Interner Serverfehler bei Rohmaterial-Abfrage',
+        });
     }
 };
 
@@ -245,13 +252,19 @@ export const fertigmaterialAbfragen = async (
             number,
             {
                 artikelnummer: number;
-                farbe: string | null;
+                farbcode: {
+                    cyan: string;
+                    magenta: string;
+                    yellow: string;
+                    black: string;
+                } | null;
                 groesse: string | null;
                 typ: string | null;
                 category: string | null;
                 menge: number;
             }
         > = {};
+
 
         for (const bestand of lagerbestaende) {
             const mat = bestand.material;
@@ -260,7 +273,13 @@ export const fertigmaterialAbfragen = async (
             if (!result[matId]) {
                 result[matId] = {
                     artikelnummer: mat.material_ID,
-                    farbe: mat.farbe ?? null,
+                    farbcode: mat.farbe_json as {
+                        cyan: string;
+                        magenta: string;
+                        yellow: string;
+                        black: string;
+                    } ?? null,
+
                     groesse: mat.groesse ?? null,
                     typ: mat.typ ?? null,
                     category: mat.category ?? null,
@@ -289,7 +308,7 @@ export const fertigmaterialAbfragen = async (
 
 export const rohmaterialBereitstellen = async (
     _req: FastifyRequest<{
-        Body: { bezeichnung: string; eigenschaft: string | null }[];
+        Body: { bezeichnung: string; farbe: Farbe }[];
     }>,
     reply: FastifyReply
 ) => {
@@ -310,19 +329,21 @@ export const rohmaterialBereitstellen = async (
 
         const ergebnisse = [];
 
-        for (const { bezeichnung, eigenschaft } of anfragen) {
+        for (const { bezeichnung, farbe } of anfragen) {
             const material = await prisma.material.findFirst({
                 where: {
                     lager_ID: rohLager.lager_ID,
                     category: bezeichnung,
-                    farbe: eigenschaft ?? undefined,
+                    farbe_json: {
+                        equals: farbe, // Suche nach exakt passendem JSON-Code
+                    },
                 },
             });
 
             if (!material) {
                 ergebnisse.push({
                     bezeichnung,
-                    eigenschaft,
+                    farbe,
                     status: 'Material nicht gefunden',
                 });
                 continue;
@@ -342,7 +363,7 @@ export const rohmaterialBereitstellen = async (
             if (!lagerbestand) {
                 ergebnisse.push({
                     bezeichnung,
-                    eigenschaft,
+                    farbe,
                     status: 'Kein ausreichender Bestand vorhanden',
                 });
                 continue;
@@ -355,7 +376,7 @@ export const rohmaterialBereitstellen = async (
 
             ergebnisse.push({
                 bezeichnung,
-                eigenschaft,
+                farbe,
                 status: 'bereitgestellt',
                 qualitaet: lagerbestand.qualitaet,
             });

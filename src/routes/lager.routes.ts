@@ -1,13 +1,19 @@
 import { FastifyInstance } from 'fastify';
-import { createLager, getAllLager, getLagerById, updateLagerById } from '../controllers/lager.controller';
+import {
+  createLager,
+  getAllLager,
+  getLagerById,
+  updateLagerById
+} from '../controllers/lager.controller';
 
 export default async function lagerRoutes(app: FastifyInstance) {
-  // POST: Lager erstellen
-  app.post('/', createLager);
-  // GET: Alle Läger abrufen
+  // GET
   app.get('/', getAllLager);
-  //GET: Ein bestimmtest Lager abrufen
   app.get('/:id', getLagerById);
-  //Updaten eines Lagers
+
+  //POST
+  app.post('/', createLager);
+
+  // PUT
   app.put('/:id', updateLagerById);
 }

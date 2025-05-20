@@ -1,4 +1,3 @@
-// src/routes/qualität.routes.ts
 import { FastifyInstance } from 'fastify';
 import {
   createQualitaet,
@@ -9,18 +8,16 @@ import {
 } from '../controllers/qualitaet.controller';
 
 export default async function qualitaetRoutes(app: FastifyInstance) {
-  // POST: Neue Qualität anlegen
+  // POST
   app.post('/', createQualitaet);
 
-  // GET: Alle Qualitätsdatensätze abrufen
+  // GET
   app.get('/', getAllQualitaeten);
-
-  // GET: Qualität nach ID abrufen
   app.get('/:id', getQualitaetById);
 
-  // PUT: Qualität aktualisieren
+  // PUT
   app.put('/:id', updateQualitaetById);
 
-  // DELETE: Qualität löschen
+  // DELETE
   app.delete('/:id', deleteQualitaetById);
 }
