@@ -1,4 +1,3 @@
-// src/modules/lagerbestand.module.ts
 import { FastifyInstance } from 'fastify';
 import lagerbestandRoutes from '../routes/lagerbestand.routes';
 

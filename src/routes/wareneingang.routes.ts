@@ -12,13 +12,20 @@ import {
 } from '../controllers/wareneingang.controller';
 
 export default async function wareneingangRoutes(app: FastifyInstance) {
-  app.post('/', createEingang);
+  // GET
   app.get('/', getAllEingaenge);
   app.get('/:id', getEingangById);
-  app.put('/:id', updateEingangById);
-  app.delete('/:id', deleteEingangById);
   app.get('/heute', getAllEingaengeHeute)
+
+  // POST
+  app.post('/', createEingang);
+  app.post('/einlagern', wareneingangEingelagern);
+
+  // PUT
+  app.put('/:id', updateEingangById);
   app.put('/sperren', updateEingaengeSperren);
   app.put('/entsperren', updateEingaengeEntsperren);
-  app.post('/einlagern', wareneingangEingelagern);
+
+  // DELETE
+  app.delete('/:id', deleteEingangById);
 }

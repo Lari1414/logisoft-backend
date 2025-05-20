@@ -1,21 +1,28 @@
-// src/routes/material.routes.ts
 import { FastifyInstance } from 'fastify';
-import { createMaterial, getAllMaterials, getMaterialById, updateMaterialById, deleteMaterialById, getRawMaterials, getFinishedMaterials } from '../controllers/material.controller';
+import {
+  createMaterial,
+  getAllMaterials,
+  getMaterialById,
+  updateMaterialById,
+  deleteMaterialById,
+  getRawMaterials,
+  getFinishedMaterials
+} from '../controllers/material.controller';
 
 
 export default async function materialRoutes(app: FastifyInstance) {
-  // POST: Material erstellen
-  app.post('/', createMaterial);
-  // GET: Alle Materialien abrufen
+  // GET
   app.get('/', getAllMaterials);
-  // GET: Nur Rohmaterialien abrufen
   app.get('/rohm', getRawMaterials);
-  // GET: Nur Fertigmaterialien abrufen
   app.get('/fertig', getFinishedMaterials);
-  // GET: Material nach ID abrufen
   app.get('/:id', getMaterialById);
-  // PUT: Updaten eines Materials
+
+  // POST
+  app.post('/', createMaterial);
+
+  // PUT
   app.put('/:id', updateMaterialById);
-  //DELETE: Löschen eines Materials
+
+  // DELETE
   app.delete('/:id', deleteMaterialById);
 }

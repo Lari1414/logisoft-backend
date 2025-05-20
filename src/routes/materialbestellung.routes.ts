@@ -10,11 +10,18 @@ import {
 } from '../controllers/materialbestellung.controller'
 
 export default async function materialbestellungRoutes(app: FastifyInstance) {
-  app.post('/', createMaterialbestellung);
+  // GET
   app.get('/', getAllMaterialbestellungen);
   app.get('/bestellt', getAllMaterialbestellungenBestellt);
   app.get('/offen', getAllMaterialbestellungenBestellen);
   app.get('/:id', getMaterialbestellungById);
+
+  // POST
+  app.post('/', createMaterialbestellung);
+
+  // PUT
   app.put('/absenden', updateMaterialbestellungenStatus);
+
+  // DELETE
   app.delete('/:id', deleteMaterialbestellungById);
 }
