@@ -8,12 +8,11 @@ type EingangBody = {
   materialDetails: {
     category?: string;
     standardmaterial: boolean;
-    farbe?: string;
     farbe_json?: {
-      cyan: string;
-      magenta: string;
-      yellow: string;
-      black: string;
+      cyan: number;
+      magenta: number;
+      yellow: number;
+      black: number;
     };
     typ?: string;
     groesse?: string;
@@ -56,7 +55,6 @@ export const createEingang = async (
       where: {
         lager_ID: rohmaterialLager.lager_ID,
         category: materialDetails.category,
-        farbe: materialDetails.farbe,
         farbe_json: { equals: materialDetails.farbe_json },
         typ: materialDetails.typ,
         groesse: materialDetails.groesse,

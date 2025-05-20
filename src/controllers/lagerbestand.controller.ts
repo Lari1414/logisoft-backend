@@ -1,5 +1,6 @@
 import { PrismaClient } from '../../generated/prisma';
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { cmykToHex } from '../utils/color.util';
 
 const prisma = new PrismaClient();
 
@@ -165,8 +166,7 @@ export const einlagernRohmaterial = async (
       qualitaet_ID: number;
       category: string;
       standardmaterial: boolean;
-      farbe: string;
-      farbe_json: { cyan: string; magenta: string; yellow: string; black: string };
+      farbe_json: { cyan: number; magenta: number; yellow: number; black: number };
       typ: string;
       groesse: string;
       url?: string;
@@ -182,7 +182,6 @@ export const einlagernRohmaterial = async (
       qualitaet_ID,
       category,
       standardmaterial,
-      farbe,
       farbe_json,
       typ,
       groesse,
@@ -193,7 +192,6 @@ export const einlagernRohmaterial = async (
       where: {
         lager_ID,
         category,
-        farbe,
         standardmaterial,
         farbe_json: { equals: farbe_json },
         typ,
@@ -201,12 +199,14 @@ export const einlagernRohmaterial = async (
       }
     });
 
+    const hexCode = cmykToHex(farbe_json);
+
     if (!material) {
       material = await prisma.material.create({
         data: {
           lager_ID,
           category,
-          farbe,
+          farbe: hexCode,
           standardmaterial,
           farbe_json,
           typ,
@@ -253,8 +253,7 @@ export const einlagernFertigmaterial = async (
       lager_ID: number;
       menge: number;
       standardmaterial: boolean;
-      farbe: string;
-      farbe_json: { cyan: string; magenta: string; yellow: string; black: string };
+      farbe_json: { cyan: number; magenta: number; yellow: number; black: number };
       typ: string;
       groesse: string;
       url?: string;
@@ -266,7 +265,6 @@ export const einlagernFertigmaterial = async (
     const {
       lager_ID,
       menge,
-      farbe,
       farbe_json,
       standardmaterial,
       typ,
@@ -277,18 +275,20 @@ export const einlagernFertigmaterial = async (
     let material = await prisma.material.findFirst({
       where: {
         lager_ID,
-        farbe,
         farbe_json: { equals: farbe_json },
         typ,
         groesse
       }
     });
 
+    const hexCode = cmykToHex(farbe_json);
+
+
     if (!material) {
       material = await prisma.material.create({
         data: {
           lager_ID,
-          farbe,
+          farbe: hexCode,
           farbe_json,
           standardmaterial,
           typ,
