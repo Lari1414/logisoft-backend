@@ -54,6 +54,7 @@ model Wareneingang {
   material              Material           @relation(fields: [material_ID], references: [material_ID])
   materialbestellung    Materialbestellung @relation(fields: [materialbestellung_ID], references: [materialbestellung_ID])
   lagerbestaende        Lagerbestand[]
+  reklamationen    Reklamation[]
 }
 
 model Lieferant {
@@ -132,4 +133,13 @@ model Auftrag {
   lager        Lager        @relation("LagerToAuftrag", fields: [lager_ID], references: [lager_ID])
   material     Material     @relation("MaterialToAuftrag", fields: [material_ID], references: [material_ID])
   lagerbestand Lagerbestand @relation(fields: [lagerbestand_ID], references: [lagerbestand_ID])
+}
+
+model Reklamation {
+  reklamation_ID   Int           @id @default(autoincrement())
+  menge            Int
+  status           String
+  wareneingang_ID  Int
+
+  wareneingang     Wareneingang  @relation(fields: [wareneingang_ID], references: [eingang_ID])
 }
