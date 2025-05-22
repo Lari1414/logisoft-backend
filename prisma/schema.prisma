@@ -89,7 +89,6 @@ model Qualitaet {
   qualitaet_ID   Int     @id @default(autoincrement())
   viskositaet    Float?
   ppml           Int?
-  deltaE         Float?
   saugfaehigkeit Float?
   weissgrad      Int?
 

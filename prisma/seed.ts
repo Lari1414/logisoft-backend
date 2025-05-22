@@ -1,29 +1,24 @@
-import { PrismaClient } from '../generated/prisma';
+import { Material, PrismaClient } from '../generated/prisma';
 import { faker } from '@faker-js/faker';
 import { cmykToHex } from '../src/utils/color.util';
 
 const prisma = new PrismaClient();
-faker.seed(123); // für konsistente Ergebnisse
+faker.seed(123);
+
+let materialien: Material[] = [];
 
 async function main() {
-  // 1. Lösche alle bestehenden Daten (mit Sicherstellung, dass keine Foreign Key-Fehler auftreten)
+
   await prisma.auftrag.deleteMany();
   await prisma.lagerbestand.deleteMany();
   await prisma.wareneingang.deleteMany();
   await prisma.materialbestellung.deleteMany();
   await prisma.mindestbestand.deleteMany();
   await prisma.material.deleteMany();
-
-  // Lösche Lieferanten zuerst, weil sie auf Adressen verweisen
   await prisma.lieferant.deleteMany();
-
-  // Lösche Adressen, nachdem alle Lieferanten gelöscht wurden
   await prisma.adresse.deleteMany();
-
-  // Lösche Lager
   await prisma.lager.deleteMany();
 
-  // 2. Erstelle Lager 1 (Rohmateriallager) und Lager 2 (Fertigmateriallager)
   let rohmaterialLager = await prisma.lager.findUnique({
     where: { lager_ID: 1 },
   });
@@ -50,7 +45,6 @@ async function main() {
     });
   }
 
-  // 3. Erzeuge 3 Adressen
   const adressen = await Promise.all(
     Array.from({ length: 3 }).map(() =>
       prisma.adresse.create({
@@ -63,7 +57,6 @@ async function main() {
     )
   );
 
-  // 4. Erzeuge 3 Lieferanten mit Adresse
   const lieferanten = await Promise.all(
     adressen.map((adresse) =>
       prisma.lieferant.create({
@@ -76,87 +69,197 @@ async function main() {
     )
   );
 
-  // 5. Erzeuge 5 Materialien mit festen Typen und Kategorie "T-Shirt"
   const typVarianten = ['V-Ausschnitt', 'Oversize', 'Top', 'Sport', 'Rundhals'];
-  const materialien = await Promise.all(
-    Array.from({ length: 5 }).map(() => {
-      const farbeJson = {
-        cyan: faker.number.int({ min: 0, max: 100 }),
-        magenta: faker.number.int({ min: 0, max: 100 }),
-        yellow: faker.number.int({ min: 0, max: 100 }),
-        black: faker.number.int({ min: 0, max: 100 }),
-      };
-      const hexCode = cmykToHex(farbeJson);
+  const groessen = ['S', 'M', 'L'];
 
-      return prisma.material.create({
+  const standardFarben = [
+    { name: 'Weiß', cmyk: { cyan: 0, magenta: 0, yellow: 0, black: 0 } },
+    { name: 'Rot', cmyk: { cyan: 0, magenta: 100, yellow: 100, black: 0 } },
+    { name: 'Blau', cmyk: { cyan: 100, magenta: 100, yellow: 0, black: 0 } },
+    { name: 'Grau', cmyk: { cyan: 0, magenta: 0, yellow: 0, black: 30 } }
+  ];
+
+  const materials: any[] = [];
+
+  for (const typ of typVarianten) {
+    for (const groesse of groessen) {
+      for (const farbe of standardFarben) {
+        const hexCode = cmykToHex(farbe.cmyk);
+        const lager_ID = farbe.name === 'Weiß' ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID;
+
+        materials.push(
+          prisma.material.create({
+            data: {
+              lager_ID,
+              category: 'T-Shirt',
+              standardmaterial: true,
+              typ,
+              groesse,
+              url: faker.internet.url(),
+              farbe: hexCode,
+              farbe_json: farbe.cmyk
+            },
+          })
+        );
+        // break; // Falls nur weiße T-Shirts erzeugt werden sollen
+      }
+    }
+  }
+
+  await Promise.all(materials);
+
+  const extraFertigMaterialien: ReturnType<typeof prisma.material.create>[] = [];
+
+  for (let i = 0; i < 6; i++) {
+    const hasPrint = faker.datatype.boolean();
+    const color = {
+      cyan: faker.number.int({ min: 0, max: 100 }),
+      magenta: faker.number.int({ min: 0, max: 100 }),
+      yellow: faker.number.int({ min: 0, max: 100 }),
+      black: faker.number.int({ min: 0, max: 100 }),
+    };
+
+    const hexCode = cmykToHex(color);
+
+    extraFertigMaterialien.push(
+      prisma.material.create({
         data: {
-          lager_ID: Math.random() < 0.5 ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID,
+          lager_ID: fertigmaterialLager.lager_ID,
           category: 'T-Shirt',
-          standardmaterial: faker.helpers.arrayElement([true, false]),
+          standardmaterial: false,
+          typ: hasPrint ? `Bedruckt ${faker.helpers.arrayElement(typVarianten)}` : faker.helpers.arrayElement(typVarianten),
+          groesse: faker.helpers.arrayElement(groessen),
+          url: faker.image.url(),
           farbe: hexCode,
-          farbe_json: farbeJson,
-          typ: faker.helpers.arrayElement(typVarianten),
-          groesse: faker.helpers.arrayElement(['S', 'M', 'L', 'XL']),
-          url: faker.internet.url(),
+          farbe_json: color,
         },
-      });
-    })
-  );
+      })
+    );
+  }
 
-  // 6. Erzeuge 3 Rohmaterialien
-  const categorys = ['Verpackung', 'Farbe', 'Druckfolie'];
-  const rohmaterialien = await Promise.all(
-    Array.from({ length: 3 }).map(() => {
-      const farbeJson = {
-        cyan: faker.number.int({ min: 0, max: 100 }),
-        magenta: faker.number.int({ min: 0, max: 100 }),
-        yellow: faker.number.int({ min: 0, max: 100 }),
-        black: faker.number.int({ min: 0, max: 100 }),
-      };
-      const hexCode = cmykToHex(farbeJson);
+  await Promise.all(extraFertigMaterialien);
 
+  const verpackung = await prisma.material.create({
+    data: {
+      lager_ID: rohmaterialLager.lager_ID,
+      category: 'Verpackung',
+      standardmaterial: true,
+      typ: 'Karton braun',
+      groesse: null,
+      url: null,
+      farbe: null,
+      farbe_json: {
+        cyan: null, magenta: null, yellow: null, black: null
+      },
+    },
+  });
+
+  // Rohmaterialien - Farbe (CMYK)
+  const farbenCMYK = [
+    { cyan: 100, magenta: 0, yellow: 0, black: 0 },     // Cyan
+    { cyan: 0, magenta: 100, yellow: 0, black: 0 },     // Magenta
+    { cyan: 0, magenta: 0, yellow: 100, black: 0 },     // Yellow
+    { cyan: 0, magenta: 0, yellow: 0, black: 100 },     // Black
+  ];
+
+  const farben = await Promise.all(
+    farbenCMYK.map((farbe) => {
       return prisma.material.create({
         data: {
           lager_ID: rohmaterialLager.lager_ID,
-          category: faker.helpers.arrayElement(categorys),
-          standardmaterial: faker.helpers.arrayElement([true, false]),
-          farbe: hexCode,
-          farbe_json: farbeJson,
-          typ: null,
+          category: 'Farbe',
+          standardmaterial: true,
+          typ: 'Standardfarbe',
           groesse: null,
           url: null,
+          farbe: cmykToHex(farbe),
+          farbe_json: farbe,
         },
       });
     })
   );
 
-  // 7. Erzeuge Qualitäten
-  const qualitaeten = await Promise.all(
+  // Rohmaterialien - Druckfolie (schwarz & weiß)
+  const druckfolien = await Promise.all(
+    [
+      { cyan: 0, magenta: 0, yellow: 0, black: 100 },
+      { cyan: 0, magenta: 0, yellow: 0, black: 0 },
+    ].map((farbe, i) => {
+      return prisma.material.create({
+        data: {
+          lager_ID: rohmaterialLager.lager_ID,
+          category: 'Druckfolie',
+          standardmaterial: true,
+          typ: i === 0 ? 'Schwarz' : 'Weiß',
+          groesse: null,
+          url: null,
+          farbe: cmykToHex(farbe),
+          farbe_json: farbe,
+        },
+      });
+    })
+  );
+
+  // Qualitäten für T-Shirts (weissgrad & saugfaehigkeit)
+  const tshirtQualitaeten = await Promise.all(
     Array.from({ length: 3 }).map(() =>
       prisma.qualitaet.create({
         data: {
-          viskositaet: faker.number.float({ min: 0.5, max: 5.0 }),
-          ppml: faker.number.int({ min: 100, max: 500 }),
-          deltaE: faker.number.float({ min: 0.1, max: 3.0 }),
-          saugfaehigkeit: faker.number.float({ min: 1.0, max: 10.0 }),
           weissgrad: faker.number.int({ min: 80, max: 100 }),
+          saugfaehigkeit: faker.number.float({ min: 1.0, max: 10.0 }),
+          ppml: null,
+          viskositaet: null
         },
       })
     )
   );
 
-  // 8. Materialbestellungen, Wareneingänge, Lagerbestand
-  for (let i = 0; i < 5; i++) {
-    const mat = faker.helpers.arrayElement(materialien);
+  // Qualitäten für Farben (ppml & viskositaet)
+  const farbenQualitaeten = await Promise.all(
+    Array.from({ length: 3 }).map(() =>
+      prisma.qualitaet.create({
+        data: {
+          ppml: faker.number.int({ min: 100, max: 500 }),
+          viskositaet: faker.number.float({ min: 0.5, max: 5.0 }),
+          weissgrad: null,
+          saugfaehigkeit: null
+        },
+      })
+    )
+  );
+
+  const qualitaeten = [...tshirtQualitaeten, ...farbenQualitaeten];
+
+  const materialien: Material[] = await prisma.material.findMany();
+
+  // Filtere Rohmaterialien (T-Shirts, Farben, Druckfolie, Verpackung)
+  const rohmaterialien = materialien.filter(mat =>
+    mat.lager_ID === rohmaterialLager.lager_ID &&
+    ['T-Shirt', 'Farbe', 'Druckfolie', 'Verpackung'].includes(mat.category!)
+  );
+
+  for (let i = 0; i < 10; i++) {
+    const mat = faker.helpers.arrayElement(rohmaterialien);
     const lieferant = faker.helpers.arrayElement(lieferanten);
-    const quali = faker.helpers.arrayElement(qualitaeten);
+
+    // Wähle die passende Qualität
+    let qualitaetID: number | null = null;
+    if (mat.category === 'T-Shirt') {
+      qualitaetID = faker.helpers.arrayElement(tshirtQualitaeten).qualitaet_ID;
+    } else if (mat.category === 'Farbe') {
+      qualitaetID = faker.helpers.arrayElement(farbenQualitaeten).qualitaet_ID;
+    } else {
+      qualitaetID = null; // Verpackung, Druckfolie etc. brauchen evtl. keine
+    }
+
+    const menge = faker.number.int({ min: 10, max: 100 });
 
     const bestellung = await prisma.materialbestellung.create({
       data: {
         lieferant_ID: lieferant.lieferant_ID,
         material_ID: mat.material_ID,
-        status: 'bestellt',
-        menge: faker.number.int({ min: 10, max: 100 }),
+        status: 'offen',
+        menge,
       },
     });
 
@@ -164,27 +267,23 @@ async function main() {
       data: {
         material_ID: mat.material_ID,
         materialbestellung_ID: bestellung.materialbestellung_ID,
-        menge: faker.number.int({ min: 10, max: 100 }),
-        status: 'eingelagert',
+        menge,
+        status: 'eingetroffen',
         lieferdatum: faker.date.recent(),
-        qualitaet_ID: quali.qualitaet_ID,
+        qualitaet_ID: qualitaetID,
       },
     });
 
-    // Überprüfe, ob `qualitaet_ID` gesetzt werden kann (bei Materialien mit Qualität)
-    const qualitaetID = mat.category === 'T-Shirt' ? quali.qualitaet_ID : null;
-
-    // Überprüfen, ob `qualitaet_ID` NULL sein kann und es sicher setzen
     await prisma.lagerbestand.create({
       data: {
         eingang_ID: eingang.eingang_ID,
         lager_ID: mat.lager_ID,
         material_ID: mat.material_ID,
         menge: eingang.menge,
+        qualitaet_ID: qualitaetID,
       },
     });
 
-    // **Füge Mindestbestand für jedes Material hinzu**
     const existing = await prisma.mindestbestand.findUnique({
       where: { material_ID: mat.material_ID },
     });
@@ -199,54 +298,25 @@ async function main() {
     }
   }
 
-  // 9. Materialbestellungen, Wareneingänge, Lagerbestand für Rohmaterial
-  for (let i = 0; i < 3; i++) {
-    const rohmat = faker.helpers.arrayElement(rohmaterialien);
-    const rohmatlieferant = faker.helpers.arrayElement(lieferanten);
-    const rohmatquali = faker.helpers.arrayElement(qualitaeten);
+  // 9. Lagerbestand für Fertigmaterialien direkt anlegen (ohne Wareneingang)
+  const fertigmaterialien = materialien.filter(
+    (mat) => mat.lager_ID === fertigmaterialLager.lager_ID
+  );
 
-    const rohmatbestellung = await prisma.materialbestellung.create({
-      data: {
-        lieferant_ID: rohmatlieferant.lieferant_ID,
-        material_ID: rohmat.material_ID,
-        status: 'bestellt',
-        menge: faker.number.int({ min: 10, max: 100 }),
-      },
-    });
-
-    const rohmateingang = await prisma.wareneingang.create({
-      data: {
-        material_ID: rohmat.material_ID,
-        materialbestellung_ID: rohmatbestellung.materialbestellung_ID,
-        menge: faker.number.int({ min: 10, max: 100 }),
-        status: 'eingelagert',
-        lieferdatum: faker.date.recent(),
-        qualitaet_ID: rohmatquali.qualitaet_ID,
-      },
-    });
+  for (const mat of fertigmaterialien) {
+    // Qualität nur für T-Shirts setzen
+    const passendeQuali = mat.category === 'T-Shirt'
+      ? faker.helpers.arrayElement(qualitaeten.filter(q => q.saugfaehigkeit !== null))
+      : null;
 
     await prisma.lagerbestand.create({
       data: {
-        eingang_ID: rohmateingang.eingang_ID,
-        lager_ID: rohmat.lager_ID,
-        material_ID: rohmat.material_ID,
-        menge: rohmateingang.menge,
-        qualitaet_ID: rohmatquali.qualitaet_ID,
+        lager_ID: mat.lager_ID,
+        material_ID: mat.material_ID,
+        menge: faker.number.int({ min: 5, max: 50 }),
+        qualitaet_ID: passendeQuali?.qualitaet_ID ?? null,
       },
     });
-
-    const existingRohmatMindestbestand = await prisma.mindestbestand.findUnique({
-      where: { material_ID: rohmat.material_ID },
-    });
-
-    if (!existingRohmatMindestbestand) {
-      await prisma.mindestbestand.create({
-        data: {
-          material_ID: rohmat.material_ID,
-          mindestbestand: faker.number.int({ min: 5, max: 20 }),
-        },
-      });
-    }
   }
 
   console.log('Seed erfolgreich abgeschlossen');
