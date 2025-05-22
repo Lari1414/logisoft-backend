@@ -11,6 +11,7 @@ import { lagerbestandModule } from './lagerbestand.module';
 import { produktionModule } from './produktion.module';
 import { versandverkaufModule } from './versandverkauf.module'
 import { auftraegeModule } from './auftraege.module';
+import { reklamationenModule } from './reklamationen.module';
 
 export async function registerModules(app: FastifyInstance) {
   await app.register(lieferantModule, { prefix: '/api/lieferanten' });
@@ -25,4 +26,5 @@ export async function registerModules(app: FastifyInstance) {
   await app.register(produktionModule, { prefix: '/api/produktion' });
   await app.register(versandverkaufModule, { prefix: '/api/versandverkauf' });
   await app.register(auftraegeModule, { prefix: '/api/auftraege' });
+  await app.register(reklamationenModule, { prefix: '/api/reklamationen' });
 }
