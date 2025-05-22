@@ -323,3 +323,65 @@ export const updateEingangById = async (
     reply.status(500).send({ error: 'Fehler beim Aktualisieren' });
   }
 };
+
+// Reklamationen anlegen
+export const createReklamation = async (
+  req: FastifyRequest<{
+    Body: {
+      wareneingang_ID: number;
+      menge: number;
+    };
+  }>,
+  reply: FastifyReply
+) => {
+  try {
+    const { wareneingang_ID, menge } = req.body;
+
+    const eingang = await prisma.wareneingang.findUnique({
+      where: { eingang_ID: wareneingang_ID },
+    });
+
+    if (!eingang) {
+      return reply.status(404).send({
+        error: `Wareneingang mit ID ${wareneingang_ID} nicht gefunden`,
+      });
+    }
+
+    if (eingang.status !== 'gesperrt') {
+      return reply.status(400).send({
+        error: `Wareneingang ${wareneingang_ID} ist nicht gesperrt und kann nicht reklamiert werden.`,
+      });
+    }
+
+    if (menge > eingang.menge) {
+      return reply.status(400).send({
+        error: `Reklamierte Menge (${menge}) überschreitet vorhandene Menge (${eingang.menge}) für Wareneingang ${wareneingang_ID}`,
+      });
+    }
+
+    await prisma.reklamation.create({
+      data: {
+        wareneingang_ID,
+        menge,
+        status: 'reklamiert',
+      },
+    });
+
+    const neueMenge = eingang.menge - menge;
+
+    await prisma.wareneingang.update({
+      where: { eingang_ID: wareneingang_ID },
+      data: {
+        menge: neueMenge,
+        status: neueMenge === 0 ? 'reklamiert' : eingang.status,
+      },
+    });
+
+    return reply.status(201).send({
+      message: `Reklamation erfolgreich erstellt für Wareneingang ${wareneingang_ID}`,
+    });
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Anlegen der Reklamation.' });
+  }
+};
