@@ -127,7 +127,6 @@ Response: [
             "qualitaet_ID": 1,
             "viskositaet": 2.02401880661447,
             "ppml": 321,
-            "deltaE": 1.777799257515616,
             "saugfaehigkeit": 5.693797534575991,
             "weissgrad": 80
         }
@@ -140,7 +139,6 @@ Response: [
             "qualitaet_ID": 2,
             "viskositaet": null,
             "ppml": 494,
-            "deltaE": null,
             "saugfaehigkeit": null,
             "weissgrad": null
         }
@@ -161,7 +159,6 @@ Request: [
         "qualitaet": {
             "viskositaet": 12.5,
             "ppml": null,
-            "deltaE": 1.8,
             "saugfaehigkeit": null,
             "weissgrad": 89.5
         }
@@ -170,7 +167,6 @@ Request: [
         "artikelnummer": 7,
         "menge": 3,
         "qualitaet": {
-            "deltaE": 2.1,
             "weissgrad": null
         }
     }

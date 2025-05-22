@@ -299,7 +299,6 @@ export const rohmaterialZurueckgeben = async (
             qualitaet: {
                 viskositaet?: number | null;
                 ppml?: number | null;
-                deltaE?: number | null;
                 saugfaehigkeit?: number | null;
                 weissgrad?: number | null;
             };

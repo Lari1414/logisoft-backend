@@ -21,7 +21,6 @@ type EingangBody = {
   qualitaet?: {
     viskositaet?: number;
     ppml?: number;
-    deltaE?: number;
     saugfaehigkeit?: number;
     weissgrad?: number;
   };
@@ -80,7 +79,6 @@ export const createEingang = async (
         where: {
           viskositaet: qualitaet.viskositaet ?? null,
           ppml: qualitaet.ppml ?? null,
-          deltaE: qualitaet.deltaE ?? null,
           saugfaehigkeit: qualitaet.saugfaehigkeit ?? null,
           weissgrad: qualitaet.weissgrad ?? null,
         },
