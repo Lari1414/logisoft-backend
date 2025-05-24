@@ -13,7 +13,7 @@ type Farbe = {
 // Erstellt Auslagerungsaufträge für die Produktion, wenn genug Rohmaterial vorhanden ist
 export const produktionBestelltMaterial = async (
     _req: FastifyRequest<{
-        Body: { Artikelnummer: number; Anzahl: number; Bestellposition: string }[];
+        Body: { Artikelnummer: number; Anzahl: number }[];
     }>,
     reply: FastifyReply
 ) => {
@@ -25,8 +25,7 @@ export const produktionBestelltMaterial = async (
             bestellungen.some(
                 (b) =>
                     typeof b.Artikelnummer !== 'number' ||
-                    typeof b.Anzahl !== 'number' ||
-                    typeof b.Bestellposition !== 'string'
+                    typeof b.Anzahl !== 'number'
             )
         ) {
             return reply.status(400).send({ error: 'Ungültiges Anfrageformat' });
@@ -34,7 +33,7 @@ export const produktionBestelltMaterial = async (
 
         const result = [];
 
-        for (const { Artikelnummer, Anzahl, Bestellposition } of bestellungen) {
+        for (const { Artikelnummer, Anzahl } of bestellungen) {
             const material = await prisma.material.findUnique({
                 where: { material_ID: Artikelnummer },
             });
@@ -85,7 +84,6 @@ export const produktionBestelltMaterial = async (
                             menge: entnahme,
                             status: 'Auslagerung angefordert',
                             lagerbestand_ID: bestand.lagerbestand_ID,
-                            bestellposition: Bestellposition,
                             angefordertVon: 'Produktion',
                         },
                     });
@@ -100,7 +98,7 @@ export const produktionBestelltMaterial = async (
                 }
             }
 
-            result.push({ Artikelnummer, Bestellposition, Auftraege: angelegteAuftraege });
+            result.push({ Artikelnummer, Auftraege: angelegteAuftraege });
         }
 
         return reply.status(200).send(result);
