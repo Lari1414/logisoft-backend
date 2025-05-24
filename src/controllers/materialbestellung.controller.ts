@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { PrismaClient } from '../../generated/prisma';
-import { cmykToHex } from '../utils/color.util';
+import { CMYK, cmykToHex } from '../utils/color.util';
 
 const prisma = new PrismaClient();
 
@@ -163,8 +163,8 @@ export const deleteMaterialbestellungById = async (
 export const createWareneingaengeZuBestellung = async (
   req: FastifyRequest<{
     Body: {
-      materialDetails: {
-        category?: string;
+      materialDetails?: {
+        category?: string | null;
         standardmaterial: boolean;
         farbe_json: {
           cyan: number;
@@ -172,8 +172,8 @@ export const createWareneingaengeZuBestellung = async (
           yellow: number;
           black: number;
         };
-        typ?: string;
-        groesse?: string;
+        typ?: string | null;
+        groesse?: string | null;
       };
       materialbestellung_ID: number;
       lieferdatum: string;
@@ -194,13 +194,13 @@ export const createWareneingaengeZuBestellung = async (
   reply: FastifyReply
 ) => {
   try {
-    const {
-      materialDetails,
-      materialbestellung_ID,
-      lieferdatum,
-      guterTeil,
-      reklamierterTeil,
-    } = req.body;
+    const { materialbestellung_ID, lieferdatum, guterTeil, reklamierterTeil } = req.body;
+
+    const materialDetails = req.body.materialDetails;
+
+    if (!lieferdatum) {
+      return reply.status(400).send({ error: 'Lieferdatum fehlt' });
+    }
 
     const rohmaterialLager = await prisma.lager.findFirst({
       where: { bezeichnung: 'Rohmateriallager' },
@@ -210,24 +210,47 @@ export const createWareneingaengeZuBestellung = async (
       return reply.status(404).send({ error: 'Rohmateriallager nicht gefunden' });
     }
 
-    const hexCode = cmykToHex(materialDetails.farbe_json);
+    const bestellung = await prisma.materialbestellung.findUnique({
+      where: { materialbestellung_ID },
+      include: { material: true },
+    });
+
+    if (!bestellung || !bestellung.material) {
+      return reply.status(404).send({ error: 'Material zur Bestellung nicht gefunden' });
+    }
+
+    const details = materialDetails ?? {
+      category: bestellung.material.category,
+      standardmaterial: bestellung.material.standardmaterial,
+      farbe_json: bestellung.material.farbe_json,
+      typ: bestellung.material.typ,
+      groesse: bestellung.material.groesse,
+    };
+
+    const hexCode = cmykToHex(details.farbe_json as CMYK);
+
+    const safeFarbeJson = details.farbe_json ?? undefined;
 
     let material = await prisma.material.findFirst({
       where: {
         lager_ID: rohmaterialLager.lager_ID,
-        category: materialDetails.category,
-        farbe_json: { equals: materialDetails.farbe_json },
-        typ: materialDetails.typ,
-        groesse: materialDetails.groesse,
+        category: details.category,
+        farbe_json: { equals: safeFarbeJson ?? undefined },
+        typ: details.typ,
+        groesse: details.groesse,
       },
     });
 
     if (!material) {
       material = await prisma.material.create({
         data: {
-          ...materialDetails,
           lager_ID: rohmaterialLager.lager_ID,
           farbe: hexCode,
+          category: details.category,
+          standardmaterial: details.standardmaterial,
+          farbe_json: safeFarbeJson,
+          typ: details.typ,
+          groesse: details.groesse,
         },
       });
     }
@@ -276,21 +299,28 @@ export const createWareneingaengeZuBestellung = async (
         data: {
           wareneingang_ID: reklamiertEingang.eingang_ID,
           menge: reklamierterTeil.menge,
-          status: 'reklamiert'
+          status: 'reklamiert',
         },
       });
     }
 
-    if (guterTeil?.menge === 0 && reklamierterTeil?.menge > 0) {
+    if ((guterTeil?.menge ?? 0) === 0 && reklamierterTeil?.menge > 0) {
       await prisma.materialbestellung.update({
         where: { materialbestellung_ID },
         data: { status: 'reklamiert' },
       });
     }
 
+    if ((guterTeil?.menge ?? 0) + (reklamierterTeil?.menge ?? 0) === bestellung.menge) {
+      await prisma.materialbestellung.update({
+        where: { materialbestellung_ID },
+        data: { status: 'erledigt' },
+      });
+    }
+
     return reply.status(201).send({ message: 'Wareneingänge erfolgreich erstellt' });
   } catch (err) {
-    console.error(err);
+    console.error('Fehler in createWareneingaengeZuBestellung:', err);
     return reply.status(500).send({ error: 'Fehler beim Anlegen der Wareneingänge' });
   }
 };
