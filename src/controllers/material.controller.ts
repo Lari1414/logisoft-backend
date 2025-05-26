@@ -185,3 +185,28 @@ export const deleteMaterialById = async (req: FastifyRequest<{ Params: { id: str
     return reply.status(500).send({ error: 'Fehler beim Löschen des Materials' });
   }
 };
+
+// GET : Kategorien anzeigen
+export const getAllMaterialCategories = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const kategorien = await prisma.material.findMany({
+      where: {
+        category: {
+          not: null,
+        },
+      },
+      distinct: ['category'],
+      select: {
+        category: true,
+      },
+      orderBy: {
+        category: 'asc',
+      },
+    });
+
+    reply.send(kategorien);
+  } catch (error) {
+    console.error(error);
+    reply.status(500).send({ error: 'Fehler beim Abrufen der Kategorien' });
+  }
+};
