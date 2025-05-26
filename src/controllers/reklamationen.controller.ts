@@ -9,6 +9,9 @@ export const getAllReklamationen = async (
 ) => {
     try {
         const reklamationen = await prisma.reklamation.findMany({
+            orderBy: {
+                reklamation_ID: 'asc',
+            },
         });
 
         return reply.status(200).send(reklamationen);

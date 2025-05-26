@@ -55,6 +55,9 @@ export const getAllMaterials = async (req: FastifyRequest, reply: FastifyReply) 
       where: {
         standardmaterial: true,
       },
+      orderBy: {
+        material_ID: 'asc',
+      },
     });
     return reply.send(materials);
   } catch (error) {
@@ -81,6 +84,9 @@ export const getRawMaterials = async (req: FastifyRequest, reply: FastifyReply) 
       where: {
         lager_ID: rohLager.lager_ID,
       },
+      orderBy: {
+        material_ID: 'asc',
+      },
     });
 
     return reply.send(materials);
@@ -104,6 +110,9 @@ export const getFinishedMaterials = async (req: FastifyRequest, reply: FastifyRe
     const materials = await prisma.material.findMany({
       where: {
         lager_ID: fertigLager.lager_ID,
+      },
+      orderBy: {
+        material_ID: 'asc',
       },
     });
 
@@ -174,5 +183,30 @@ export const deleteMaterialById = async (req: FastifyRequest<{ Params: { id: str
     }
 
     return reply.status(500).send({ error: 'Fehler beim Löschen des Materials' });
+  }
+};
+
+// GET : Kategorien anzeigen
+export const getAllMaterialCategories = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const kategorien = await prisma.material.findMany({
+      where: {
+        category: {
+          not: null,
+        },
+      },
+      distinct: ['category'],
+      select: {
+        category: true,
+      },
+      orderBy: {
+        category: 'asc',
+      },
+    });
+
+    reply.send(kategorien);
+  } catch (error) {
+    console.error(error);
+    reply.status(500).send({ error: 'Fehler beim Abrufen der Kategorien' });
   }
 };

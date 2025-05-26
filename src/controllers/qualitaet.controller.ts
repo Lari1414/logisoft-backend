@@ -34,7 +34,11 @@ export const createQualitaet = async (req: FastifyRequest<{ Body: CreateQualitae
 // GET: Alle Qualitätsdatensätze
 export const getAllQualitaeten = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
-    const daten = await prisma.qualitaet.findMany();
+    const daten = await prisma.qualitaet.findMany({
+      orderBy: {
+        qualitaet_ID: 'asc',
+      },
+    });
     return reply.send(daten);
   } catch (error) {
     console.error(error);

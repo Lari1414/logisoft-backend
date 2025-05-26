@@ -112,6 +112,9 @@ export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply)
   try {
     const result = await prisma.wareneingang.findMany({
       include: { material: true, materialbestellung: true },
+      orderBy: {
+        eingang_ID: 'asc',
+      },
     });
     reply.send(result);
   } catch (err) {
@@ -130,6 +133,9 @@ export const getAllEingaengeHeute = async (_req: FastifyRequest, reply: FastifyR
           gte: startOfDay(now),
           lte: endOfDay(now),
         },
+      },
+      orderBy: {
+        eingang_ID: 'asc',
       },
     });
     reply.send(result);

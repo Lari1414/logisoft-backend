@@ -30,7 +30,11 @@ export const createMindestbestand = async (req: FastifyRequest<{ Body: CreateMin
 // GET: Alle Mindestbestände abrufen
 export const getAllMindestbestand = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
-    const eintraege = await prisma.mindestbestand.findMany();
+    const eintraege = await prisma.mindestbestand.findMany({
+      orderBy: {
+        mindestbestand_ID: 'asc',
+      },
+    });
     return reply.send(eintraege);
   } catch (error) {
     console.error(error);

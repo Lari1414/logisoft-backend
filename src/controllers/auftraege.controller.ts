@@ -261,6 +261,9 @@ export const getHistorie = async (_req: FastifyRequest, reply: FastifyReply) => 
         status: {
           in: ["Einlagerung abgeschlossen", "Auslagerung abgeschlossen"],
         },
+      },
+      orderBy: {
+        auftrag_ID: 'asc'
       }
     });
 
@@ -279,6 +282,9 @@ export const getAuftraege = async (_req: FastifyRequest, reply: FastifyReply) =>
         status: {
           in: ["Einlagerung angefordert", "Auslagerung angefordert"],
         },
+      },
+      orderBy: {
+        auftrag_ID: 'asc'
       }
     });
 
@@ -297,6 +303,9 @@ export const getEinlagerungsAuftraege = async (_req: FastifyRequest, reply: Fast
         status: {
           in: ["Einlagerung angefordert"],
         },
+      },
+      orderBy: {
+        auftrag_ID: 'asc'
       }
     });
 
@@ -315,6 +324,9 @@ export const getAuslagerungsAuftraege = async (_req: FastifyRequest, reply: Fast
         status: {
           in: ["Auslagerung angefordert"],
         },
+      },
+      orderBy: {
+        auftrag_ID: 'asc'
       }
     });
 
