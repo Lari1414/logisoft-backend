@@ -55,6 +55,9 @@ export const getAllMaterials = async (req: FastifyRequest, reply: FastifyReply) 
       where: {
         standardmaterial: true,
       },
+      orderBy: {
+        material_ID: 'asc',
+      },
     });
     return reply.send(materials);
   } catch (error) {
@@ -81,6 +84,9 @@ export const getRawMaterials = async (req: FastifyRequest, reply: FastifyReply) 
       where: {
         lager_ID: rohLager.lager_ID,
       },
+      orderBy: {
+        material_ID: 'asc',
+      },
     });
 
     return reply.send(materials);
@@ -104,6 +110,9 @@ export const getFinishedMaterials = async (req: FastifyRequest, reply: FastifyRe
     const materials = await prisma.material.findMany({
       where: {
         lager_ID: fertigLager.lager_ID,
+      },
+      orderBy: {
+        material_ID: 'asc',
       },
     });
 

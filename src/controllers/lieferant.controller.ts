@@ -32,6 +32,9 @@ export const getAllLieferant = async (_req: FastifyRequest, reply: FastifyReply)
   try {
     const lieferanten = await prisma.lieferant.findMany({
       include: { adresse: true },
+      orderBy: {
+        lieferant_ID: 'asc',
+      },
     });
     reply.send(lieferanten);
   } catch (error) {

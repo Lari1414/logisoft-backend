@@ -18,7 +18,11 @@ export const createAdresse = async (req: FastifyRequest<{ Body: { strasse: strin
 // GET: Alle Adressen abrufen
 export const getAllAdressen = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
-    const adressen = await prisma.adresse.findMany();
+    const adressen = await prisma.adresse.findMany({
+      orderBy: {
+        adresse_ID: 'asc',
+      },
+    });
     reply.send(adressen);
   } catch (error) {
     console.error(error);

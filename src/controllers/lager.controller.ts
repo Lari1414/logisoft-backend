@@ -28,7 +28,11 @@ export const createLager = async (request: FastifyRequest<{ Body: CreateLagerBod
 // GET /allLager – Alle Läger abrufen
 export const getAllLager = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
-    const laeger = await prisma.lager.findMany();
+    const laeger = await prisma.lager.findMany({
+      orderBy: {
+        lager_ID: 'asc',
+      },
+    });
 
     reply.send(laeger);
   } catch (error) {

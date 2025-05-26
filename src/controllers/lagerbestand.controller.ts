@@ -30,7 +30,12 @@ export const createLagerbestand = async (
 export const getAllLagerbestaende = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const eintraege = await prisma.lagerbestand.findMany({
-      include: { material: true, qualitaet: true },
+      include: {
+        material: true, qualitaet: true
+      },
+      orderBy: {
+        lagerbestand_ID: 'asc',
+      },
     });
     return reply.send(eintraege);
   } catch (error) {
@@ -43,8 +48,15 @@ export const getAllLagerbestaende = async (_req: FastifyRequest, reply: FastifyR
 export const getAllLagerbestaendeRoh = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const eintraege = await prisma.lagerbestand.findMany({
-      where: { lager_ID: 1, menge: { gt: 0 } },
-      include: { material: true, qualitaet: true },
+      where: {
+        lager_ID: 1, menge: { gt: 0 }
+      },
+      include: {
+        material: true, qualitaet: true
+      },
+      orderBy: {
+        lagerbestand_ID: 'asc',
+      },
     });
     return reply.send(eintraege);
   } catch (error) {
@@ -57,8 +69,15 @@ export const getAllLagerbestaendeRoh = async (_req: FastifyRequest, reply: Fasti
 export const getAllLagerbestaendeFertig = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const eintraege = await prisma.lagerbestand.findMany({
-      where: { lager_ID: 2, menge: { gt: 0 } },
-      include: { material: true },
+      where: {
+        lager_ID: 2, menge: { gt: 0 }
+      },
+      include: {
+        material: true
+      },
+      orderBy: {
+        lagerbestand_ID: 'asc',
+      },
     });
     return reply.send(eintraege);
   } catch (error) {

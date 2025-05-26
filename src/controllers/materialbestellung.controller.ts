@@ -43,6 +43,9 @@ export const getAllMaterialbestellungen = async (_req: FastifyRequest, reply: Fa
         lieferant: true,
         material: true,
       },
+      orderBy: {
+        materialbestellung_ID: 'asc',
+      },
     });
     return reply.send(bestellungen);
   } catch (error) {
@@ -62,6 +65,9 @@ export const getAllMaterialbestellungenBestellt = async (_req: FastifyRequest, r
         lieferant: true,
         material: true,
       },
+      orderBy: {
+        materialbestellung_ID: 'asc',
+      },
     });
     return reply.send(bestellungen);
   } catch (error) {
@@ -80,6 +86,9 @@ export const getAllMaterialbestellungenBestellen = async (_req: FastifyRequest, 
       include: {
         lieferant: true,
         material: true,
+      },
+      orderBy: {
+        materialbestellung_ID: 'asc',
       },
     });
     return reply.send(bestellungen);
