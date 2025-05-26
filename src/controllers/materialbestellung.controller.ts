@@ -186,7 +186,16 @@ export const createWareneingaengeZuBestellung = async (
           weissgrad?: number;
         };
       };
-      reklamierterTeil: {
+      gesperrterTeil?: {
+        menge: number;
+        qualitaet?: {
+          viskositaet?: number;
+          ppml?: number;
+          saugfaehigkeit?: number;
+          weissgrad?: number;
+        };
+      };
+      reklamierterTeil?: {
         menge: number;
       };
     };
@@ -194,9 +203,14 @@ export const createWareneingaengeZuBestellung = async (
   reply: FastifyReply
 ) => {
   try {
-    const { materialbestellung_ID, lieferdatum, guterTeil, reklamierterTeil } = req.body;
-
-    const materialDetails = req.body.materialDetails;
+    const {
+      materialDetails,
+      materialbestellung_ID,
+      lieferdatum,
+      guterTeil,
+      gesperrterTeil,
+      reklamierterTeil,
+    } = req.body;
 
     if (!lieferdatum) {
       return reply.status(400).send({ error: 'Lieferdatum fehlt' });
@@ -228,14 +242,13 @@ export const createWareneingaengeZuBestellung = async (
     };
 
     const hexCode = cmykToHex(details.farbe_json as CMYK);
-
     const safeFarbeJson = details.farbe_json ?? undefined;
 
     let material = await prisma.material.findFirst({
       where: {
         lager_ID: rohmaterialLager.lager_ID,
         category: details.category,
-        farbe_json: { equals: safeFarbeJson ?? undefined },
+        farbe_json: { equals: safeFarbeJson },
         typ: details.typ,
         groesse: details.groesse,
       },
@@ -284,8 +297,37 @@ export const createWareneingaengeZuBestellung = async (
       });
     }
 
+    if (gesperrterTeil && gesperrterTeil.menge > 0) {
+      let qualitaetGesperrtEntry = null;
+      if (gesperrterTeil.qualitaet) {
+        qualitaetGesperrtEntry = await prisma.qualitaet.findFirst({
+          where: {
+            viskositaet: gesperrterTeil.qualitaet.viskositaet ?? null,
+            ppml: gesperrterTeil.qualitaet.ppml ?? null,
+            saugfaehigkeit: gesperrterTeil.qualitaet.saugfaehigkeit ?? null,
+            weissgrad: gesperrterTeil.qualitaet.weissgrad ?? null,
+          },
+        });
+
+        if (!qualitaetGesperrtEntry) {
+          qualitaetGesperrtEntry = await prisma.qualitaet.create({ data: gesperrterTeil.qualitaet });
+        }
+      }
+
+      await prisma.wareneingang.create({
+        data: {
+          material_ID: material.material_ID,
+          materialbestellung_ID,
+          menge: gesperrterTeil.menge,
+          status: 'gesperrt',
+          lieferdatum: new Date(lieferdatum),
+          qualitaet_ID: qualitaetGesperrtEntry?.qualitaet_ID,
+        },
+      });
+    }
+
     if (reklamierterTeil && reklamierterTeil.menge > 0) {
-      const reklamiertEingang = await prisma.wareneingang.create({
+      const rekl = await prisma.wareneingang.create({
         data: {
           material_ID: material.material_ID,
           materialbestellung_ID,
@@ -297,7 +339,7 @@ export const createWareneingaengeZuBestellung = async (
 
       await prisma.reklamation.create({
         data: {
-          wareneingang_ID: reklamiertEingang.eingang_ID,
+          wareneingang_ID: rekl.eingang_ID,
           menge: reklamierterTeil.menge,
           status: 'reklamiert',
         },
