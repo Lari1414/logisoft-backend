@@ -304,19 +304,10 @@ export const createWareneingaengeZuBestellung = async (
       });
     }
 
-    if ((guterTeil?.menge ?? 0) === 0 && reklamierterTeil?.menge > 0) {
-      await prisma.materialbestellung.update({
-        where: { materialbestellung_ID },
-        data: { status: 'reklamiert' },
-      });
-    }
-
-    if ((guterTeil?.menge ?? 0) + (reklamierterTeil?.menge ?? 0) === bestellung.menge) {
-      await prisma.materialbestellung.update({
-        where: { materialbestellung_ID },
-        data: { status: 'erledigt' },
-      });
-    }
+    await prisma.materialbestellung.update({
+      where: { materialbestellung_ID },
+      data: { status: 'erledigt' },
+    });
 
     return reply.status(201).send({ message: 'Wareneingänge erfolgreich erstellt' });
   } catch (err) {

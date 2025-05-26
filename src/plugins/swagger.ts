@@ -6,7 +6,7 @@ export default fp(async (fastify) => {
   await fastify.register(swagger, {
     openapi: {
       info: {
-        title: 'Codevision API',
+        title: 'Logisoft API',
         version: '1.0.0',
       },
     },
