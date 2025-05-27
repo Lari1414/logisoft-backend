@@ -4,129 +4,6 @@ import axios from 'axios';
 
 const prisma = new PrismaClient();
 
-export async function erstelleAuslagerungsAuftrag(
-  req: FastifyRequest<{
-    Body: {
-      material_ID: number;
-      anzahl: number;
-      bestellposition?: string;
-    };
-  }>,
-  reply: FastifyReply
-) {
-  const { material_ID, anzahl, bestellposition } = req.body;
-
-  try {
-
-    const lagerbestand = await prisma.lagerbestand.findFirst({
-      where: { material_ID },
-    });
-
-    if (!lagerbestand) {
-      return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
-    }
-
-    const neuerAuftrag = await prisma.auftrag.create({
-      data: {
-        material_ID,
-        menge: anzahl,
-        status: 'Auslagerung angefordert',
-        lagerbestand_ID: lagerbestand.lagerbestand_ID,
-        lager_ID: lagerbestand.lager_ID,
-        bestellposition: bestellposition ?? null,
-        angefordertVon: "Verkauf und Versand"
-      },
-    });
-
-    return reply.send(neuerAuftrag);
-  } catch (error) {
-    console.error(error);
-    return reply.status(500).send({ error: 'Fehler beim Erstellen des Auftrags' });
-  }
-}
-
-export async function setzeAuftragAufAbholbereitHandler(
-  req: FastifyRequest<{
-    Body: {
-      auftrag_ID: number;
-    };
-  }>,
-  reply: FastifyReply
-) {
-  const { auftrag_ID } = req.body;
-
-  try {
-    const auftrag = await prisma.auftrag.findUnique({
-      where: { auftrag_ID },
-    });
-
-    if (!auftrag) {
-      return reply.status(404).send({ error: `Auftrag mit ID ${auftrag_ID} nicht gefunden` });
-    }
-
-    if (!auftrag.bestellposition) {
-      return reply.status(400).send({ error: `bestellposition fehlt für Auftrag ${auftrag_ID}` });
-    }
-
-    await prisma.auftrag.update({
-      where: { auftrag_ID },
-      data: { status: 'abholbereit' },
-    });
-
-    const response = await axios.patch(
-      `https://verkaufundversand/bestellposition/${auftrag.bestellposition}`,
-      { status: 'abholbereit' },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    return reply.send({ success: true, statusCode: response.status });
-  } catch (error) {
-    console.error('Fehler:', error);
-    return reply.status(500).send({ error: 'Auftrag konnte nicht aktualisiert werden' });
-  }
-}
-
-export async function setzeAuftragAufAbholbereit(
-  req: FastifyRequest<{
-    Body: {
-      auftrag_ID: number;
-    };
-  }>,
-  reply: FastifyReply
-) {
-  const { auftrag_ID } = req.body;
-
-  try {
-    const auftrag = await prisma.auftrag.findUnique({
-      where: { auftrag_ID },
-    });
-
-    if (!auftrag) {
-      return reply.status(404).send({ error: `Auftrag mit ID ${auftrag_ID} nicht gefunden` });
-    }
-
-    if (!auftrag.bestellposition) {
-      return reply.status(400).send({ error: `bestellposition fehlt für Auftrag ${auftrag_ID}` });
-    }
-
-    await prisma.auftrag.update({
-      where: { auftrag_ID },
-      data: { status: 'abholbereit' },
-    });
-
-    const response = await axios.patch(
-      `https://verkaufundversand/bestellposition/${auftrag.bestellposition}`,
-      { status: 'abholbereit' },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    return reply.send({ success: true, statusCode: response.status });
-  } catch (error) {
-    console.error('Fehler:', error);
-    return reply.status(500).send({ error: 'Auftrag konnte nicht aktualisiert werden' });
-  }
-}
-
 // POST: Material einlagern
 export const materialEinlagern = async (
   req: FastifyRequest<{
@@ -199,35 +76,31 @@ export const materialAuslagern = async (
   const { auftragIds } = req.body;
 
   try {
+    const benachrichtigungenProduktion: any[] = [];
+    const benachrichtigungenVerkauf: any[] = [];
+
     for (const auftragId of auftragIds) {
       const auftrag = await prisma.auftrag.findUnique({
         where: { auftrag_ID: auftragId },
       });
 
-      if (!auftrag) {
-        console.warn(`Auftrag ${auftragId} nicht gefunden – übersprungen`);
+      if (!auftrag || auftrag.status !== 'Auslagerung angefordert') {
         continue;
       }
 
-      if (auftrag.status !== 'Auslagerung angefordert') {
-        console.warn(`Auftrag ${auftragId} hat Status "${auftrag.status}" – übersprungen`);
-        continue;
-      }
-
-      const bestand = await prisma.lagerbestand.findFirst({
-        where: {
-          material_ID: auftrag.material_ID,
-          lager_ID: auftrag.lager_ID,
-        },
+      const bestand = await prisma.lagerbestand.findUnique({
+        where: { lagerbestand_ID: auftrag.lagerbestand_ID },
       });
 
-      if (!bestand) {
-        console.warn(`Lagerbestand für Auftrag ${auftragId} nicht gefunden – übersprungen`);
+      if (!bestand || bestand.menge < auftrag.menge) {
         continue;
       }
 
-      if (bestand.menge < auftrag.menge) {
-        console.warn(`Nicht genug Bestand für Auftrag ${auftragId} (verfügbar: ${bestand.menge}, benötigt: ${auftrag.menge}) – übersprungen`);
+      const material = await prisma.material.findUnique({
+        where: { material_ID: auftrag.material_ID },
+      });
+
+      if (!material) {
         continue;
       }
 
@@ -244,6 +117,43 @@ export const materialAuslagern = async (
           status: 'Auslagerung abgeschlossen',
         },
       });
+
+      const qualitaet = await prisma.qualitaet.findUnique({
+        where: { qualitaet_ID: bestand.qualitaet_ID ?? 0 },
+      });
+
+      if (auftrag.angefordertVon === 'Produktion') {
+
+        if (['Farbe', 'Druckfolie', 'Verpackung'].includes(material.category)) {
+          benachrichtigungenProduktion.push({
+            bezeichnung: material.category,
+            ppml: qualitaet?.ppml || 0,
+            viskositaet: qualitaet?.viskositaet || 0,
+            menge: auftrag.menge,
+          });
+        } else {
+
+          benachrichtigungenProduktion.push({
+            artikelnummer: material.material_ID,
+            saugfaehigkeit: qualitaet?.saugfaehigkeit || 0,
+            weissgrad: qualitaet?.weissgrad || 0,
+            menge: auftrag.menge,
+          });
+        }
+      } else if (auftrag.angefordertVon === 'Verkauf und Versand') {
+        benachrichtigungenVerkauf.push({
+          bestellposition: auftrag.bestellposition,
+          status: 'abholbereit',
+        });
+      }
+    }
+
+    if (benachrichtigungenProduktion.length > 0) {
+      await axios.post('http://produktion-service/material-bereitgestellt', benachrichtigungenProduktion);
+    }
+
+    if (benachrichtigungenVerkauf.length > 0) {
+      await axios.post('http://verkauf-service/ware-bereitgestellt', benachrichtigungenVerkauf);
     }
 
     return reply.send({ status: 'Auslagerung abgeschlossen' });
