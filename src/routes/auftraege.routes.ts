@@ -1,7 +1,5 @@
 import { FastifyInstance } from 'fastify';
 import {
-    erstelleAuslagerungsAuftrag,
-    setzeAuftragAufAbholbereit,
     materialEinlagern,
     materialAuslagern,
     getHistorie,
@@ -18,8 +16,6 @@ export default async function auftraegeRoutes(app: FastifyInstance) {
     app.get('/abfragen/auslagerung', getAuslagerungsAuftraege);
 
     // POST
-    app.post('/erstelleAuslagerungsAuftrag', erstelleAuslagerungsAuftrag);
-    app.post('/setzeAuftragAufAbholbereit', setzeAuftragAufAbholbereit);
     app.post('/material/einlagern', materialEinlagern);
     app.post('/material/auslagern', materialAuslagern);
 }
