@@ -84,3 +84,126 @@ export const getMaterialBestand = async (
     return reply.status(500).send({ error: 'Fehler beim Abrufen des Materialbestands' });
   }
 };
+
+export async function erstelleAuslagerungsAuftrag(
+  req: FastifyRequest<{
+    Body: {
+      material_ID: number;
+      anzahl: number;
+      bestellposition?: string;
+    };
+  }>,
+  reply: FastifyReply
+) {
+  const { material_ID, anzahl, bestellposition } = req.body;
+
+  try {
+
+    const lagerbestand = await prisma.lagerbestand.findFirst({
+      where: { material_ID },
+    });
+
+    if (!lagerbestand) {
+      return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
+    }
+
+    const neuerAuftrag = await prisma.auftrag.create({
+      data: {
+        material_ID,
+        menge: anzahl,
+        status: 'Auslagerung angefordert',
+        lagerbestand_ID: lagerbestand.lagerbestand_ID,
+        lager_ID: lagerbestand.lager_ID,
+        bestellposition: bestellposition ?? null,
+        angefordertVon: "Verkauf und Versand"
+      },
+    });
+
+    return reply.send(neuerAuftrag);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({ error: 'Fehler beim Erstellen des Auftrags' });
+  }
+}
+
+/* export async function setzeAuftragAufAbholbereitHandler(
+  req: FastifyRequest<{
+    Body: {
+      auftrag_ID: number;
+    };
+  }>,
+  reply: FastifyReply
+) {
+  const { auftrag_ID } = req.body;
+
+  try {
+    const auftrag = await prisma.auftrag.findUnique({
+      where: { auftrag_ID },
+    });
+
+    if (!auftrag) {
+      return reply.status(404).send({ error: `Auftrag mit ID ${auftrag_ID} nicht gefunden` });
+    }
+
+    if (!auftrag.bestellposition) {
+      return reply.status(400).send({ error: `bestellposition fehlt für Auftrag ${auftrag_ID}` });
+    }
+
+    await prisma.auftrag.update({
+      where: { auftrag_ID },
+      data: { status: 'abholbereit' },
+    });
+
+    const response = await axios.patch(
+      `https://verkaufundversand/bestellposition/${auftrag.bestellposition}`,
+      { status: 'abholbereit' },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    return reply.send({ success: true, statusCode: response.status });
+  } catch (error) {
+    console.error('Fehler:', error);
+    return reply.status(500).send({ error: 'Auftrag konnte nicht aktualisiert werden' });
+  }
+}
+
+export async function setzeAuftragAufAbholbereit(
+  req: FastifyRequest<{
+    Body: {
+      auftrag_ID: number;
+    };
+  }>,
+  reply: FastifyReply
+) {
+  const { auftrag_ID } = req.body;
+
+  try {
+    const auftrag = await prisma.auftrag.findUnique({
+      where: { auftrag_ID },
+    });
+
+    if (!auftrag) {
+      return reply.status(404).send({ error: `Auftrag mit ID ${auftrag_ID} nicht gefunden` });
+    }
+
+    if (!auftrag.bestellposition) {
+      return reply.status(400).send({ error: `bestellposition fehlt für Auftrag ${auftrag_ID}` });
+    }
+
+    await prisma.auftrag.update({
+      where: { auftrag_ID },
+      data: { status: 'abholbereit' },
+    });
+
+    const response = await axios.patch(
+      `https://verkaufundversand/bestellposition/${auftrag.bestellposition}`,
+      { status: 'abholbereit' },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    return reply.send({ success: true, statusCode: response.status });
+  } catch (error) {
+    console.error('Fehler:', error);
+    return reply.status(500).send({ error: 'Auftrag konnte nicht aktualisiert werden' });
+  }
+} */
