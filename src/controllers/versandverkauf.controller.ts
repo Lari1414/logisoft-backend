@@ -5,87 +5,109 @@ import { cmykToHex } from '../utils/color.util';
 const prisma = new PrismaClient();
 
 // Verkauf frägt Fertigmaterial an
-export const materialBestand = async (
+export const materialBestaendeAbrufen = async (
   req: FastifyRequest<{
     Body: {
       category: string;
-      aufdruck: string;
+      aufdruck: string | null;
       groesse: string;
       farbe_json: {
         cyan: number;
         magenta: number;
         yellow: number;
         black: number;
-      }
+      };
       typ: string;
-    };
+    }[];
   }>,
   reply: FastifyReply
 ) => {
   try {
-    const { category, aufdruck, groesse, farbe_json, typ } = req.body;
+    const anfragen = req.body;
 
-    let material = await prisma.material.findFirst({
-      where: {
-        category: category,
-        url: aufdruck,
-        groesse: groesse,
-        farbe_json: {
-          equals: farbe_json
-        },
-        typ: typ,
-      },
-    });
-
-    const fertiglager = await prisma.lager.findFirst({
-      where: {
-        bezeichnung: "Fertigmateriallager",
-      },
-    });
-
-    if (!fertiglager) {
-      return reply.status(500).send({ error: 'Fertigmateriallager nicht gefunden' });
+    if (
+      !Array.isArray(anfragen) ||
+      anfragen.some(
+        (a) =>
+          typeof a.category !== 'string' ||
+          typeof a.groesse !== 'string' ||
+          typeof a.typ !== 'string' ||
+          typeof a.farbe_json !== 'object' ||
+          (typeof a.aufdruck !== 'string' && a.aufdruck !== null)
+      )
+    ) {
+      return reply.status(400).send({ error: 'Ungültiges Anfrageformat' });
     }
 
-    if (!material) {
-      const hexCode = cmykToHex(farbe_json);
+    const rohLager = await prisma.lager.findFirst({
+      where: { bezeichnung: 'Rohmateriallager' },
+    });
 
-      material = await prisma.material.create({
-        data: {
-          lager_ID: fertiglager?.lager_ID,
-          category: category,
-          farbe_json: {
-            equals: farbe_json,
-          },
+    const fertigLager = await prisma.lager.findFirst({
+      where: { bezeichnung: 'Fertigmateriallager' },
+    });
+
+    if (!rohLager || !fertigLager) {
+      return reply.status(500).send({ error: 'Lager konnte nicht gefunden werden' });
+    }
+
+    const result = [];
+
+    for (const { category, aufdruck, groesse, farbe_json, typ } of anfragen) {
+      const isRohmaterial =
+        farbe_json.cyan === 0 &&
+        farbe_json.magenta === 0 &&
+        farbe_json.yellow === 0 &&
+        farbe_json.black === 0 &&
+        (!aufdruck || aufdruck.trim() === '');
+
+      const zielLager = isRohmaterial ? rohLager : fertigLager;
+
+      let material = await prisma.material.findFirst({
+        where: {
+          category,
           url: aufdruck,
-          groesse: groesse,
-          farbe: hexCode,
-          typ: typ,
-          standardmaterial: false
+          groesse,
+          farbe_json: { equals: farbe_json },
+          typ,
         },
+      });
+
+      if (!material) {
+        const hexCode = cmykToHex(farbe_json);
+
+        material = await prisma.material.create({
+          data: {
+            lager_ID: zielLager.lager_ID,
+            category,
+            farbe_json: { equals: farbe_json },
+            url: aufdruck,
+            groesse,
+            farbe: hexCode,
+            typ,
+            standardmaterial: isRohmaterial,
+          },
+        });
+      }
+
+      const bestand = await prisma.lagerbestand.aggregate({
+        where: { material_ID: material.material_ID },
+        _sum: { menge: true },
+      });
+
+      result.push({
+        material_ID: material.material_ID,
+        category: material.category,
+        url: material.url,
+        groesse: material.groesse,
+        farbe: farbe_json,
+        typ: material.typ,
+        anzahl: bestand._sum.menge || 0,
+        lager: zielLager.bezeichnung,
       });
     }
 
-    const bestand = await prisma.lagerbestand.aggregate({
-      where: {
-        material_ID: material.material_ID,
-      },
-      _sum: {
-        menge: true,
-      },
-    });
-
-    const anzahl = bestand._sum.menge || 0;
-
-    return reply.send({
-      material_ID: material.material_ID,
-      category: material.category,
-      url: material.url,
-      groesse: material.groesse,
-      farbe: material.farbe,
-      typ: material.typ,
-      anzahl,
-    });
+    return reply.send(result);
   } catch (error) {
     console.error(error);
     return reply.status(500).send({ error: 'Fehler beim Abrufen des Materialbestands' });

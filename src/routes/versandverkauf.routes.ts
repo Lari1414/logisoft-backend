@@ -1,7 +1,7 @@
 // src/routes/versandverkauf.routes.ts
 import { FastifyInstance } from 'fastify';
 import {
-  materialBestand,
+  materialBestaendeAbrufen,
   erstelleAuslagerungsAuftraegeVerkauf,
   getKategorienMitGroessenUndTypen
 } from '../controllers/versandverkauf.controller'
@@ -11,6 +11,6 @@ export default async function versandverkaufRoutes(app: FastifyInstance) {
   app.get('/kategorien', getKategorienMitGroessenUndTypen);
 
   // POST
-  app.post('/materialbestand', materialBestand);
+  app.post('/materialbestand', materialBestaendeAbrufen);
   app.post('/auslagerung', erstelleAuslagerungsAuftraegeVerkauf);
 }
