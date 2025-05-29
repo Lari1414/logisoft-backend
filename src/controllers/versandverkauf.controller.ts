@@ -39,13 +39,8 @@ export const materialBestaendeAbrufen = async (
       return reply.status(400).send({ error: 'Ungültiges Anfrageformat' });
     }
 
-    const rohLager = await prisma.lager.findFirst({
-      where: { bezeichnung: 'Rohmateriallager' },
-    });
-
-    const fertigLager = await prisma.lager.findFirst({
-      where: { bezeichnung: 'Fertigmateriallager' },
-    });
+    const rohLager = await prisma.lager.findFirst({ where: { bezeichnung: 'Rohmateriallager' } });
+    const fertigLager = await prisma.lager.findFirst({ where: { bezeichnung: 'Fertigmateriallager' } });
 
     if (!rohLager || !fertigLager) {
       return reply.status(500).send({ error: 'Lager konnte nicht gefunden werden' });
@@ -95,6 +90,18 @@ export const materialBestaendeAbrufen = async (
         _sum: { menge: true },
       });
 
+      const reserviert = await prisma.auftrag.aggregate({
+        where: {
+          material_ID: material.material_ID,
+          status: 'Auslagerung angefordert',
+        },
+        _sum: { menge: true },
+      });
+
+      const gesamt = bestand._sum.menge || 0;
+      const reservierteMenge = reserviert._sum.menge || 0;
+      const verfuegbar = Math.max(gesamt - reservierteMenge, 0);
+
       result.push({
         material_ID: material.material_ID,
         category: material.category,
@@ -102,7 +109,7 @@ export const materialBestaendeAbrufen = async (
         groesse: material.groesse,
         farbe: farbe_json,
         typ: material.typ,
-        anzahl: bestand._sum.menge || 0,
+        anzahl: verfuegbar,
         lager: zielLager.bezeichnung,
       });
     }
