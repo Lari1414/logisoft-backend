@@ -76,6 +76,7 @@ export const materialAuslagern = async (
   const { auftragIds } = req.body;
 
   try {
+    const benachrichtigungenProduktionRohm: any[] = [];
     const benachrichtigungenProduktion: any[] = [];
     const benachrichtigungenVerkauf: any[] = [];
 
@@ -125,12 +126,20 @@ export const materialAuslagern = async (
       if (auftrag.angefordertVon === 'Produktion') {
 
         if (['Farbe', 'Druckfolie', 'Verpackung'].includes(material.category)) {
-          benachrichtigungenProduktion.push({
-            bezeichnung: material.category,
-            ppml: qualitaet?.ppml || 0,
-            viskositaet: qualitaet?.viskositaet || 0,
-            menge: auftrag.menge,
-          });
+          if (['Farbe'].includes(material.category)) {
+            benachrichtigungenProduktionRohm.push({
+              bezeichnung: material.category,
+              ppml: qualitaet?.ppml || 0,
+              viskositaet: qualitaet?.viskositaet || 0,
+              menge: auftrag.menge,
+            });
+          }
+          else {
+            benachrichtigungenProduktionRohm.push({
+              bezeichnung: material.category,
+              menge: auftrag.menge,
+            });
+          }
         } else {
 
           benachrichtigungenProduktion.push({
@@ -150,6 +159,10 @@ export const materialAuslagern = async (
 
     if (benachrichtigungenProduktion.length > 0) {
       await axios.post('http://produktion-service/material-bereitgestellt', benachrichtigungenProduktion);
+    }
+
+    if (benachrichtigungenProduktionRohm.length > 0) {
+      await axios.post('http://produktion-service/material-bereitgestellt', benachrichtigungenProduktionRohm);
     }
 
     if (benachrichtigungenVerkauf.length > 0) {
