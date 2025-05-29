@@ -85,7 +85,8 @@ async function main() {
     for (const groesse of groessen) {
       for (const farbe of standardFarben) {
         const hexCode = cmykToHex(farbe.cmyk);
-        const lager_ID = farbe.name === 'Weiß' ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID;
+        const istWeiss = farbe.name === 'Weiß';
+        const lager_ID = istWeiss ? rohmaterialLager.lager_ID : fertigmaterialLager.lager_ID;
 
         materials.push(
           prisma.material.create({
@@ -95,13 +96,12 @@ async function main() {
               standardmaterial: true,
               typ,
               groesse,
-              url: faker.internet.url(),
+              url: istWeiss ? null : faker.internet.url(),
               farbe: hexCode,
-              farbe_json: farbe.cmyk
+              farbe_json: farbe.cmyk,
             },
           })
         );
-        // break; // Falls nur weiße T-Shirts erzeugt werden sollen
       }
     }
   }
