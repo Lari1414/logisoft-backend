@@ -17,6 +17,7 @@ interface CreateMaterialBody {
   typ?: string;
   groesse?: string;
   url?: string;
+  farbe?: string;
 }
 
 // POST: Material erstellen
@@ -147,6 +148,11 @@ export const updateMaterialById = async (req: FastifyRequest<{ Params: { id: str
   try {
     const id = parseInt(req.params.id, 10);
     const data = req.body;
+
+    if (data.farbe_json) {
+      const hexCode = cmykToHex(data.farbe_json);
+      data.farbe = hexCode;
+    }
 
     const updated = await prisma.material.update({
       where: { material_ID: id },
