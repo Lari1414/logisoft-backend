@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 interface CreateMaterialBody {
   lager_ID: number;
-  category?: string;
+  category: string;
   standardmaterial: boolean;
   farbe_json: {
     cyan: number;
@@ -197,9 +197,9 @@ export const getAllMaterialCategories = async (_req: FastifyRequest, reply: Fast
   try {
     const kategorien = await prisma.material.findMany({
       where: {
-        category: {
-          not: null,
-        },
+        NOT: {
+          category: null,
+        } as any,
       },
       distinct: ['category'],
       select: {

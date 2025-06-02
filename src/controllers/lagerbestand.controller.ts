@@ -276,6 +276,7 @@ export const einlagernFertigmaterial = async (
       typ: string;
       groesse: string;
       url?: string;
+      category: string;
     };
   }>,
   reply: FastifyReply
@@ -288,7 +289,8 @@ export const einlagernFertigmaterial = async (
       standardmaterial,
       typ,
       groesse,
-      url
+      url,
+      category
     } = req.body;
 
     let material = await prisma.material.findFirst({
@@ -312,7 +314,8 @@ export const einlagernFertigmaterial = async (
           standardmaterial,
           typ,
           groesse,
-          url
+          url,
+          category
         }
       });
     }

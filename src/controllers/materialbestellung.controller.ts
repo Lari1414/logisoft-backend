@@ -173,7 +173,7 @@ export const createWareneingaengeZuBestellung = async (
   req: FastifyRequest<{
     Body: {
       materialDetails?: {
-        category?: string | null;
+        category: string;
         standardmaterial: boolean;
         farbe_json: {
           cyan: number;

@@ -12,7 +12,7 @@ datasource db {
 model Material {
   material_ID Int     @id @default(autoincrement())
   lager_ID    Int
-  category    String?
+  category    String
   farbe       String?
   farbe_json  Json?
   typ         String?

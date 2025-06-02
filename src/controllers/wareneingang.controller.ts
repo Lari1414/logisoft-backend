@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 type EingangBody = {
   materialDetails: {
-    category?: string;
+    category: string;
     standardmaterial: boolean;
     farbe_json: {
       cyan: number;
