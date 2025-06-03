@@ -191,6 +191,7 @@ export const createWareneingaengeZuBestellung = async (
         qualitaet?: {
           viskositaet?: number;
           ppml?: number;
+          deltaE?: number
           saugfaehigkeit?: number;
           weissgrad?: number;
         };
@@ -200,6 +201,7 @@ export const createWareneingaengeZuBestellung = async (
         qualitaet?: {
           viskositaet?: number;
           ppml?: number;
+          deltaE?: number;
           saugfaehigkeit?: number;
           weissgrad?: number;
         };
@@ -284,6 +286,7 @@ export const createWareneingaengeZuBestellung = async (
           where: {
             viskositaet: guterTeil.qualitaet.viskositaet ?? null,
             ppml: guterTeil.qualitaet.ppml ?? null,
+            deltaE: guterTeil.qualitaet.deltaE ?? null,
             saugfaehigkeit: guterTeil.qualitaet.saugfaehigkeit ?? null,
             weissgrad: guterTeil.qualitaet.weissgrad ?? null,
           },
@@ -313,6 +316,7 @@ export const createWareneingaengeZuBestellung = async (
           where: {
             viskositaet: gesperrterTeil.qualitaet.viskositaet ?? null,
             ppml: gesperrterTeil.qualitaet.ppml ?? null,
+            deltaE: gesperrterTeil.qualitaet.deltaE ?? null,
             saugfaehigkeit: gesperrterTeil.qualitaet.saugfaehigkeit ?? null,
             weissgrad: gesperrterTeil.qualitaet.weissgrad ?? null,
           },

@@ -209,19 +209,21 @@ async function main() {
           weissgrad: faker.number.int({ min: 80, max: 100 }),
           saugfaehigkeit: faker.number.float({ min: 1.0, max: 10.0 }),
           ppml: null,
-          viskositaet: null
+          viskositaet: null,
+          deltaE: null
         },
       })
     )
   );
 
-  // Qualitäten für Farben (ppml & viskositaet)
+  // Qualitäten für Farben (deltaE, ppml & viskositaet)
   const farbenQualitaeten = await Promise.all(
     Array.from({ length: 3 }).map(() =>
       prisma.qualitaet.create({
         data: {
           ppml: faker.number.int({ min: 100, max: 500 }),
           viskositaet: faker.number.float({ min: 0.5, max: 5.0 }),
+          deltaE: faker.number.float({ min: 0, max: 100 }),
           weissgrad: null,
           saugfaehigkeit: null
         },
