@@ -11,6 +11,7 @@ async function main() {
 
   await prisma.auftrag.deleteMany();
   await prisma.lagerbestand.deleteMany();
+  await prisma.reklamation.deleteMany();
   await prisma.wareneingang.deleteMany();
   await prisma.materialbestellung.deleteMany();
   await prisma.mindestbestand.deleteMany();
@@ -238,21 +239,34 @@ async function main() {
     ['T-Shirt', 'Farbe', 'Druckfolie', 'Verpackung'].includes(mat.category!)
   );
 
+  const wareneingangStatusVarianten = [
+    "eingetroffen",
+    "eingetroffen",
+    "eingetroffen",
+    "gesperrt",
+    "reklamiert",
+  ];
+
+  while (wareneingangStatusVarianten.length < 10) {
+    wareneingangStatusVarianten.push("eingetroffen");
+  }
+
+  // Shuffle für Zufälligkeit
+  faker.helpers.shuffle(wareneingangStatusVarianten);
+
   for (let i = 0; i < 10; i++) {
     const mat = faker.helpers.arrayElement(rohmaterialien);
     const lieferant = faker.helpers.arrayElement(lieferanten);
 
-    // Wähle die passende Qualität
     let qualitaetID: number | null = null;
     if (mat.category === 'T-Shirt') {
       qualitaetID = faker.helpers.arrayElement(tshirtQualitaeten).qualitaet_ID;
     } else if (mat.category === 'Farbe') {
       qualitaetID = faker.helpers.arrayElement(farbenQualitaeten).qualitaet_ID;
-    } else {
-      qualitaetID = null; // Verpackung, Druckfolie etc. brauchen evtl. keine
     }
 
     const menge = faker.number.int({ min: 10, max: 100 });
+    const status = wareneingangStatusVarianten[i];
 
     const bestellung = await prisma.materialbestellung.create({
       data: {
@@ -268,7 +282,7 @@ async function main() {
         material_ID: mat.material_ID,
         materialbestellung_ID: bestellung.materialbestellung_ID,
         menge,
-        status: 'eingetroffen',
+        status,
         lieferdatum: faker.date.recent(),
         qualitaet_ID: qualitaetID,
       },
@@ -284,6 +298,16 @@ async function main() {
       },
     });
 
+    if (status === "reklamiert") {
+      await prisma.reklamation.create({
+        data: {
+          menge: faker.number.int({ min: 1, max: menge }),
+          status: "reklamiert",
+          wareneingang_ID: eingang.eingang_ID,
+        },
+      });
+    }
+
     const existing = await prisma.mindestbestand.findUnique({
       where: { material_ID: mat.material_ID },
     });
@@ -297,6 +321,7 @@ async function main() {
       });
     }
   }
+
 
   // 9. Lagerbestand für Fertigmaterialien direkt anlegen (ohne Wareneingang)
   const fertigmaterialien = materialien.filter(
@@ -315,6 +340,51 @@ async function main() {
         material_ID: mat.material_ID,
         menge: faker.number.int({ min: 5, max: 50 }),
         qualitaet_ID: passendeQuali?.qualitaet_ID ?? null,
+      },
+    });
+  }
+
+  function generiereBestellposition(): string {
+    const pos = `POS${faker.number.int({ min: 1000000, max: 9999999 })}`;
+    const menge = faker.number.int({ min: 1, max: 5 });
+    return `${pos}*${menge}`;
+  }
+
+  const auftragsStatus = [
+    { status: "Auslagerung angefordert", angefordertVon: "Verkauf und Versand" },
+    { status: "Auslagerung angefordert", angefordertVon: "Produktion" },
+    { status: "Auslagerung angefordert", angefordertVon: "Verkauf und Versand" },
+    { status: "Einlagerung angefordert", angefordertVon: "Produktion" },
+    { status: "Einlagerung angefordert", angefordertVon: "Produktion" },
+    { status: "Einlagerung angefordert", angefordertVon: "Produktion" },
+    { status: "Einlagerung abgeschlossen", angefordertVon: "Produktion" },
+    { status: "Auslagerung abgeschlossen", angefordertVon: "Verkauf und Versand" },
+    { status: "Auslagerung abgeschlossen", angefordertVon: "Produktion" },
+  ];
+
+  for (const eintrag of auftragsStatus) {
+    const passendeBestaende = await prisma.lagerbestand.findMany({
+      where: {
+        menge: { gte: 5 },
+      },
+      include: {
+        material: true,
+        lager: true,
+      },
+    });
+
+    const bestand = faker.helpers.arrayElement(passendeBestaende);
+    const menge = faker.number.int({ min: 1, max: Math.min(5, bestand.menge) });
+
+    await prisma.auftrag.create({
+      data: {
+        lager_ID: bestand.lager_ID,
+        material_ID: bestand.material_ID,
+        lagerbestand_ID: bestand.lagerbestand_ID,
+        menge,
+        status: eintrag.status,
+        angefordertVon: eintrag.angefordertVon,
+        bestellposition: generiereBestellposition(),
       },
     });
   }

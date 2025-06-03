@@ -111,6 +111,9 @@ export const createEingang = async (
 export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const result = await prisma.wareneingang.findMany({
+      where: {
+        status: { not: "reklamiert" }
+      },
       include: { material: true, materialbestellung: true },
       orderBy: {
         eingang_ID: 'asc',
