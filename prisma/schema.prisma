@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -10,14 +10,14 @@ datasource db {
 }
 
 model Material {
-  material_ID Int     @id @default(autoincrement())
-  lager_ID    Int
-  category    String
-  farbe       String?
-  farbe_json  Json?
-  typ         String?
-  groesse     String?
-  url         String?
+  material_ID      Int     @id @default(autoincrement())
+  lager_ID         Int
+  category         String
+  farbe            String?
+  farbe_json       Json?
+  typ              String?
+  groesse          String?
+  url              String?
   standardmaterial Boolean
 
   lager          Lager                @relation(fields: [lager_ID], references: [lager_ID])
@@ -30,12 +30,12 @@ model Material {
 
 model Materialbestellung {
   materialbestellung_ID Int     @id @default(autoincrement())
-  lieferant_ID          Int
+  lieferant_ID          Int?
   material_ID           Int
   status                String?
   menge                 Int
 
-  lieferant Lieferant      @relation(fields: [lieferant_ID], references: [lieferant_ID])
+  lieferant Lieferant?     @relation(fields: [lieferant_ID], references: [lieferant_ID])
   material  Material       @relation(fields: [material_ID], references: [material_ID])
   eingaenge Wareneingang[]
 }
@@ -48,13 +48,13 @@ model Wareneingang {
   status                String?
   lieferdatum           DateTime
 
-  qualitaet_ID          Int?
-  qualitaet             Qualitaet? @relation("QualitaetToWareneingang", fields: [qualitaet_ID], references: [qualitaet_ID])
+  qualitaet_ID Int?
+  qualitaet    Qualitaet? @relation("QualitaetToWareneingang", fields: [qualitaet_ID], references: [qualitaet_ID])
 
-  material              Material           @relation(fields: [material_ID], references: [material_ID])
-  materialbestellung    Materialbestellung @relation(fields: [materialbestellung_ID], references: [materialbestellung_ID])
-  lagerbestaende        Lagerbestand[]
-  reklamationen    Reklamation[]
+  material           Material           @relation(fields: [material_ID], references: [material_ID])
+  materialbestellung Materialbestellung @relation(fields: [materialbestellung_ID], references: [materialbestellung_ID])
+  lagerbestaende     Lagerbestand[]
+  reklamationen      Reklamation[]
 }
 
 model Lieferant {
@@ -86,7 +86,7 @@ model Lager {
 }
 
 model Qualitaet {
-  qualitaet_ID   Int     @id @default(autoincrement())
+  qualitaet_ID   Int    @id @default(autoincrement())
   viskositaet    Float?
   ppml           Int?
   saugfaehigkeit Float?
@@ -135,10 +135,10 @@ model Auftrag {
 }
 
 model Reklamation {
-  reklamation_ID   Int           @id @default(autoincrement())
-  menge            Int
-  status           String
-  wareneingang_ID  Int
+  reklamation_ID  Int    @id @default(autoincrement())
+  menge           Int
+  status          String
+  wareneingang_ID Int
 
-  wareneingang     Wareneingang  @relation(fields: [wareneingang_ID], references: [eingang_ID])
+  wareneingang Wareneingang @relation(fields: [wareneingang_ID], references: [eingang_ID])
 }

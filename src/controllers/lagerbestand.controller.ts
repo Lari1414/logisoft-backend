@@ -153,7 +153,9 @@ export const auslagernMaterial = async (
 ) => {
   try {
     const { lagerbestand_ID, menge } = req.body;
-    const bestand = await prisma.lagerbestand.findUnique({ where: { lagerbestand_ID } });
+    const bestand = await prisma.lagerbestand.findUnique({ where: { lagerbestand_ID }, include: {
+        material: true,
+      },});
 
     if (!bestand) {
       return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
@@ -167,9 +169,31 @@ export const auslagernMaterial = async (
       where: { lagerbestand_ID },
       data: { menge: bestand.menge - menge },
     });
+    const neuerBestand = await prisma.lagerbestand.findUnique({ where: { lagerbestand_ID },include: { material: true }, });
 
+    if (!neuerBestand) {
+      return reply.status(404).send({ error: 'Lagerbestand nicht gefunden' });
+    }
+    if (neuerBestand.material.standardmaterial) {
+      const mindestbestandEintraege = await prisma.mindestbestand.findMany({
+        where: { material_ID: neuerBestand.material_ID }
+      });
+
+    const mindestbestand = mindestbestandEintraege.length > 0 ? mindestbestandEintraege[0].mindestbestand : 0;
+
+    if (neuerBestand && neuerBestand.menge <= mindestbestand) {
+      await prisma.materialbestellung.create({
+        data: {
+          menge: 0,
+          status: 'offen',
+          material: {
+            connect: { material_ID: bestand.material_ID },
+          }
+        },
+      });
+    }
     return reply.status(200).send({ message: 'Material erfolgreich ausgelagert' });
-  } catch (error) {
+  }} catch (error) {
     console.error('Fehler bei auslagernMaterial:', error);
     return reply.status(500).send({ error: 'Fehler beim Auslagern des Materials' });
   }
