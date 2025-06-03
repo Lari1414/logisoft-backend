@@ -91,6 +91,7 @@ model Qualitaet {
   ppml           Int?
   saugfaehigkeit Float?
   weissgrad      Int?
+  deltaE         Float?
 
   eingaenge      Lagerbestand[]
   wareneingaenge Wareneingang[] @relation("QualitaetToWareneingang")

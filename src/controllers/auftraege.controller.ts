@@ -131,6 +131,7 @@ export const materialAuslagern = async (
               bezeichnung: material.category,
               ppml: qualitaet?.ppml || 0,
               viskositaet: qualitaet?.viskositaet || 0,
+              deltaE: qualitaet?.deltaE || 0,
               menge: auftrag.menge,
             });
           }

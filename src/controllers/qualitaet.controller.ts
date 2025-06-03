@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 interface CreateQualitaetBody {
   viskositaet: number;
   ppml: number;
+  deltaE: number;
   saugfaehigkeit: number;
   weissgrad: number;
 }
@@ -13,12 +14,13 @@ interface CreateQualitaetBody {
 // POST: Qualität erstellen
 export const createQualitaet = async (req: FastifyRequest<{ Body: CreateQualitaetBody }>, reply: FastifyReply) => {
   try {
-    const { viskositaet, ppml, saugfaehigkeit, weissgrad } = req.body;
+    const { viskositaet, ppml, deltaE, saugfaehigkeit, weissgrad } = req.body;
 
     const neueQualitaet = await prisma.qualitaet.create({
       data: {
         viskositaet,
         ppml,
+        deltaE,
         saugfaehigkeit,
         weissgrad,
       },
