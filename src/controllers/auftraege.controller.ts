@@ -97,6 +97,10 @@ export const materialAuslagern = async (
         continue;
       }
 
+      if (auftrag.material_ID === null) {
+        continue;
+      }
+
       const material = await prisma.material.findUnique({
         where: { material_ID: auftrag.material_ID },
       });
@@ -160,6 +164,7 @@ export const materialAuslagern = async (
       } else if (auftrag.angefordertVon === 'Verkauf und Versand') {
         console.log('angefordert von Verkauf und Versand');
         benachrichtigungenVerkauf.push({
+          artikelnummer: material.material_ID,
           bestellposition: auftrag.bestellposition,
           status: 'READY_FOR_SHIPMENT',
         });
@@ -184,9 +189,39 @@ export const materialAuslagern = async (
           'https://code-vision-backend-fmcchjhwd5ejfbgn.westeurope-01.azurewebsites.net/position/' + benachrichtigung.bestellposition,
           { status: benachrichtigung.status }
         );
+
+        const lagerbestandSumme = await prisma.lagerbestand.aggregate({
+          _sum: {
+            menge: true,
+          },
+          where: {
+            material_ID: benachrichtigung.artikelnummer,
+          },
+        });
+
+        const bestand = lagerbestandSumme._sum.menge ?? 0;
+
+        const standardmaterial = await prisma.material.findUnique({
+          where: {
+            material_ID: benachrichtigung.artikelnummer,
+          },
+        });
+
+        if (bestand <= 0 && standardmaterial?.standardmaterial === false) {
+          await prisma.lagerbestand.deleteMany({
+            where: {
+              material_ID: benachrichtigung.artikelnummer,
+            },
+          });
+
+          await prisma.material.delete({
+            where: {
+              material_ID: benachrichtigung.artikelnummer,
+            },
+          });
+        }
       }
     }
-
     return reply.send({ status: 'Auslagerung abgeschlossen' });
   } catch (error) {
     console.error('Fehler beim Auslagern von Aufträgen:', error);

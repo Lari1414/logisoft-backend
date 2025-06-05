@@ -97,7 +97,7 @@ async function main() {
               standardmaterial: true,
               typ,
               groesse,
-              url: istWeiss ? null : faker.internet.url(),
+              url: istWeiss ? null : (Math.random() < 0.5 ? faker.internet.url() : null),
               farbe: hexCode,
               farbe_json: farbe.cmyk,
             },
