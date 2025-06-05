@@ -159,14 +159,17 @@ export const materialAuslagern = async (
     }
 
     if (benachrichtigungenProduktion.length > 0) {
+      console.log('Benachrichtigungen für Produktion:', benachrichtigungenProduktion)
       await axios.post('https://backend-your-shirt-gmbh-production.up.railway.app/materialBestellung/materialien-bereitgestellt', benachrichtigungenProduktion);
     }
 
     if (benachrichtigungenProduktionRohm.length > 0) {
+      console.log('Benachrichtigungen für Produktion Rohm:', benachrichtigungenProduktionRohm)
       await axios.post('https://backend-your-shirt-gmbh-production.up.railway.app/materialKanister/api/bereitstellen', benachrichtigungenProduktionRohm);
     }
 
     if (benachrichtigungenVerkauf.length > 0) {
+      console.log('Benachrichtigungen für Verkauf:', benachrichtigungenVerkauf)
       await axios.post('http://verkauf-service/ware-bereitgestellt', benachrichtigungenVerkauf);
     }
 
