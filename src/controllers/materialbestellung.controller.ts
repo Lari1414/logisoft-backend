@@ -39,6 +39,7 @@ export const createMaterialbestellung = async (
 export const getAllMaterialbestellungen = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const bestellungen = await prisma.materialbestellung.findMany({
+      where: { status: { in: ["offen", "bestellt"] } },
       include: {
         lieferant: true,
         material: true,

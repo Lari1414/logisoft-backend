@@ -346,15 +346,15 @@ async function main() {
   }
 
   const auftragsStatus = [
-    { status: "Auslagerung angefordert", angefordertVon: "Verkauf und Versand" },
-    { status: "Auslagerung angefordert", angefordertVon: "Produktion" },
-    { status: "Auslagerung angefordert", angefordertVon: "Verkauf und Versand" },
-    { status: "Einlagerung angefordert", angefordertVon: "Produktion" },
-    { status: "Einlagerung angefordert", angefordertVon: "Produktion" },
-    { status: "Einlagerung angefordert", angefordertVon: "Produktion" },
-    { status: "Einlagerung abgeschlossen", angefordertVon: "Produktion" },
-    { status: "Auslagerung abgeschlossen", angefordertVon: "Verkauf und Versand" },
-    { status: "Auslagerung abgeschlossen", angefordertVon: "Produktion" },
+    { status: "auslagerung angefordert", angefordertVon: "Verkauf und Versand" },
+    { status: "auslagerung angefordert", angefordertVon: "Produktion" },
+    { status: "auslagerung angefordert", angefordertVon: "Verkauf und Versand" },
+    { status: "einlagerung angefordert", angefordertVon: "Produktion" },
+    { status: "einlagerung angefordert", angefordertVon: "Produktion" },
+    { status: "einlagerung angefordert", angefordertVon: "Produktion" },
+    { status: "einlagerung abgeschlossen", angefordertVon: "Produktion" },
+    { status: "auslagerung abgeschlossen", angefordertVon: "Verkauf und Versand" },
+    { status: "auslagerung abgeschlossen", angefordertVon: "Produktion" },
   ];
 
   for (const eintrag of auftragsStatus) {
