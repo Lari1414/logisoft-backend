@@ -134,6 +134,7 @@ export const materialAuslagern = async (
             console.log('Farbe');
             benachrichtigungenProduktionRohm.push({
               bezeichnung: material.category,
+              farbe: material.farbe_json,
               ppml: qualitaet?.ppml || 0,
               viskositaet: qualitaet?.viskositaet || 0,
               deltaE: qualitaet?.deltaE || 0,
