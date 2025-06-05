@@ -160,7 +160,7 @@ export const materialAuslagern = async (
         console.log('angefordert von Verkauf und Versand');
         benachrichtigungenVerkauf.push({
           bestellposition: auftrag.bestellposition,
-          status: 'abholbereit',
+          status: 'READY_FOR_SHIPMENT',
         });
       }
     }
@@ -176,8 +176,14 @@ export const materialAuslagern = async (
     }
 
     if (benachrichtigungenVerkauf.length > 0) {
-      console.log('Benachrichtigungen für Verkauf:', benachrichtigungenVerkauf)
-      await axios.post('http://verkauf-service/ware-bereitgestellt', benachrichtigungenVerkauf);
+      console.log('Benachrichtigungen für Verkauf:', benachrichtigungenVerkauf);
+
+      for (const benachrichtigung of benachrichtigungenVerkauf) {
+        await axios.patch(
+          'https://code-vision-backend-fmcchjhwd5ejfbgn.westeurope-01.azurewebsites.net/position/' + benachrichtigung.bestellposition,
+          { status: benachrichtigung.status }
+        );
+      }
     }
 
     return reply.send({ status: 'Auslagerung abgeschlossen' });
