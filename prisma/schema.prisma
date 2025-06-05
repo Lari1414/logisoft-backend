@@ -123,16 +123,16 @@ model Mindestbestand {
 model Auftrag {
   auftrag_ID      Int     @id @default(autoincrement())
   lager_ID        Int
-  material_ID     Int
+  material_ID     Int?
   menge           Int
   status          String
-  lagerbestand_ID Int
+  lagerbestand_ID Int?
   bestellposition String?
   angefordertVon  String
 
   lager        Lager        @relation("LagerToAuftrag", fields: [lager_ID], references: [lager_ID])
-  material     Material     @relation("MaterialToAuftrag", fields: [material_ID], references: [material_ID])
-  lagerbestand Lagerbestand @relation(fields: [lagerbestand_ID], references: [lagerbestand_ID])
+  material     Material?     @relation("MaterialToAuftrag", fields: [material_ID], references: [material_ID], onDelete: SetNull)
+  lagerbestand Lagerbestand? @relation(fields: [lagerbestand_ID], references: [lagerbestand_ID], onDelete: SetNull)
 }
 
 model Reklamation {

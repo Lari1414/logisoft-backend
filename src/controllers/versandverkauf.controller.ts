@@ -175,8 +175,10 @@ export async function erstelleAuslagerungsAuftraegeVerkauf(
       });
 
       const reservierteMengen = reservierungen.reduce((acc, auftrag) => {
-        acc[auftrag.lagerbestand_ID] =
+        if (auftrag.lagerbestand_ID !== null) {
+          acc[auftrag.lagerbestand_ID] =
           (acc[auftrag.lagerbestand_ID] || 0) + auftrag.menge;
+        }
         return acc;
       }, {} as Record<number, number>);
 

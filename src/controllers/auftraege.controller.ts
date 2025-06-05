@@ -31,6 +31,11 @@ export const materialEinlagern = async (
         continue;
       }
 
+      if (auftrag.lagerbestand_ID === null) {
+        console.warn(`Lagerbestand für Auftrag ${auftragId} nicht gefunden – übersprungen`);
+        continue;
+      }
+
       const bestand = await prisma.lagerbestand.findFirst({
         where: {
           lagerbestand_ID: auftrag.lagerbestand_ID,
@@ -89,11 +94,19 @@ export const materialAuslagern = async (
         continue;
       }
 
+      if (auftrag.lagerbestand_ID === null) {
+        continue;
+      }
+
       const bestand = await prisma.lagerbestand.findUnique({
         where: { lagerbestand_ID: auftrag.lagerbestand_ID },
       });
 
       if (!bestand || bestand.menge < auftrag.menge) {
+        continue;
+      }
+
+      if (auftrag.material_ID === null) {
         continue;
       }
 
@@ -160,6 +173,7 @@ export const materialAuslagern = async (
       } else if (auftrag.angefordertVon === 'Verkauf und Versand') {
         console.log('angefordert von Verkauf und Versand');
         benachrichtigungenVerkauf.push({
+          artikelnummer: material.material_ID,
           bestellposition: auftrag.bestellposition,
           status: 'READY_FOR_SHIPMENT',
         });
@@ -184,9 +198,39 @@ export const materialAuslagern = async (
           'https://code-vision-backend-fmcchjhwd5ejfbgn.westeurope-01.azurewebsites.net/position/' + benachrichtigung.bestellposition,
           { status: benachrichtigung.status }
         );
+
+        const lagerbestandSumme = await prisma.lagerbestand.aggregate({
+          _sum: {
+            menge: true,
+          },
+          where: {
+            material_ID: benachrichtigung.artikelnummer,
+          },
+        });
+
+        const bestand = lagerbestandSumme._sum.menge ?? 0;
+
+        const standardmaterial = await prisma.material.findUnique({
+          where: {
+            material_ID: benachrichtigung.artikelnummer,
+          },
+        });
+
+        if (bestand <= 0 && standardmaterial?.standardmaterial === false) {
+          await prisma.lagerbestand.deleteMany({
+            where: {
+              material_ID: benachrichtigung.artikelnummer,
+            },
+          });
+
+          await prisma.material.delete({
+            where: {
+              material_ID: benachrichtigung.artikelnummer,
+            },
+          });
+        }
       }
     }
-
     return reply.send({ status: 'Auslagerung abgeschlossen' });
   } catch (error) {
     console.error('Fehler beim Auslagern von Aufträgen:', error);
@@ -202,6 +246,11 @@ export const getHistorie = async (_req: FastifyRequest, reply: FastifyReply) => 
         status: {
           in: ["Einlagerung abgeschlossen", "Auslagerung abgeschlossen"],
         },
+      },
+      include: {
+        material: true,
+        lager: true,
+        lagerbestand: true
       },
       orderBy: {
         auftrag_ID: 'asc'

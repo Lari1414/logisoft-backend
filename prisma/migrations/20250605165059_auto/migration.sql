@@ -27,7 +27,7 @@ CREATE TABLE "Materialbestellung" (
 -- CreateTable
 CREATE TABLE "Wareneingang" (
     "eingang_ID" SERIAL NOT NULL,
-    "material_ID" INTEGER NOT NULL,
+    "material_ID" INTEGER,
     "materialbestellung_ID" INTEGER NOT NULL,
     "menge" INTEGER NOT NULL,
     "status" TEXT,
@@ -102,7 +102,7 @@ CREATE TABLE "Mindestbestand" (
 CREATE TABLE "Auftrag" (
     "auftrag_ID" SERIAL NOT NULL,
     "lager_ID" INTEGER NOT NULL,
-    "material_ID" INTEGER NOT NULL,
+    "material_ID" INTEGER,
     "menge" INTEGER NOT NULL,
     "status" TEXT NOT NULL,
     "lagerbestand_ID" INTEGER NOT NULL,
@@ -138,7 +138,7 @@ ALTER TABLE "Materialbestellung" ADD CONSTRAINT "Materialbestellung_material_ID_
 ALTER TABLE "Wareneingang" ADD CONSTRAINT "Wareneingang_qualitaet_ID_fkey" FOREIGN KEY ("qualitaet_ID") REFERENCES "Qualitaet"("qualitaet_ID") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Wareneingang" ADD CONSTRAINT "Wareneingang_material_ID_fkey" FOREIGN KEY ("material_ID") REFERENCES "Material"("material_ID") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Wareneingang" ADD CONSTRAINT "Wareneingang_material_ID_fkey" FOREIGN KEY ("material_ID") REFERENCES "Material"("material_ID") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Wareneingang" ADD CONSTRAINT "Wareneingang_materialbestellung_ID_fkey" FOREIGN KEY ("materialbestellung_ID") REFERENCES "Materialbestellung"("materialbestellung_ID") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -165,7 +165,7 @@ ALTER TABLE "Mindestbestand" ADD CONSTRAINT "Mindestbestand_material_ID_fkey" FO
 ALTER TABLE "Auftrag" ADD CONSTRAINT "Auftrag_lager_ID_fkey" FOREIGN KEY ("lager_ID") REFERENCES "Lager"("lager_ID") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Auftrag" ADD CONSTRAINT "Auftrag_material_ID_fkey" FOREIGN KEY ("material_ID") REFERENCES "Material"("material_ID") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Auftrag" ADD CONSTRAINT "Auftrag_material_ID_fkey" FOREIGN KEY ("material_ID") REFERENCES "Material"("material_ID") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Auftrag" ADD CONSTRAINT "Auftrag_lagerbestand_ID_fkey" FOREIGN KEY ("lagerbestand_ID") REFERENCES "Lagerbestand"("lagerbestand_ID") ON DELETE RESTRICT ON UPDATE CASCADE;
