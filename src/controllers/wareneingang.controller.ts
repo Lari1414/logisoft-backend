@@ -275,7 +275,7 @@ export const wareneingangEingelagern = async (
         where: { eingang_ID: id },
       });
 
-      if (!wareneingang || wareneingang.status === 'gesperrt' || wareneingang.material_ID === null) {
+      if (!wareneingang || wareneingang.status === 'gesperrt') {
         übersprungen++;
         continue;
       }

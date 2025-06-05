@@ -31,6 +31,11 @@ export const materialEinlagern = async (
         continue;
       }
 
+      if (auftrag.lagerbestand_ID === null) {
+        console.warn(`Lagerbestand für Auftrag ${auftragId} nicht gefunden – übersprungen`);
+        continue;
+      }
+
       const bestand = await prisma.lagerbestand.findFirst({
         where: {
           lagerbestand_ID: auftrag.lagerbestand_ID,
@@ -86,6 +91,10 @@ export const materialAuslagern = async (
       });
 
       if (!auftrag || auftrag.status !== 'Auslagerung angefordert') {
+        continue;
+      }
+
+      if (auftrag.lagerbestand_ID === null) {
         continue;
       }
 
@@ -237,6 +246,11 @@ export const getHistorie = async (_req: FastifyRequest, reply: FastifyReply) => 
         status: {
           in: ["Einlagerung abgeschlossen", "Auslagerung abgeschlossen"],
         },
+      },
+      include: {
+        material: true,
+        lager: true,
+        lagerbestand: true
       },
       orderBy: {
         auftrag_ID: 'asc'

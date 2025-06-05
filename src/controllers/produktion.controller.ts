@@ -73,7 +73,9 @@ export const produktionBestelltMaterial = async (
             });
 
             const reservierteMengen = reservierungen.reduce((acc, auftrag) => {
-                acc[auftrag.lagerbestand_ID] = (acc[auftrag.lagerbestand_ID] || 0) + auftrag.menge;
+                if (auftrag.lagerbestand_ID != null) {
+                    acc[auftrag.lagerbestand_ID] = (acc[auftrag.lagerbestand_ID] || 0) + auftrag.menge;
+                }
                 return acc;
             }, {} as Record<number, number>);
 
@@ -191,8 +193,10 @@ export const produktionBestelltRohmaterial = async (
                 select: { lagerbestand_ID: true, menge: true },
             });
 
-            const reservierteMengen = reservierungen.reduce((acc, r) => {
-                acc[r.lagerbestand_ID] = (acc[r.lagerbestand_ID] || 0) + r.menge;
+            const reservierteMengen = reservierungen.reduce((acc, auftrag) => {
+                if (auftrag.lagerbestand_ID != null) {
+                    acc[auftrag.lagerbestand_ID] = (acc[auftrag.lagerbestand_ID] || 0) + auftrag.menge;
+                }
                 return acc;
             }, {} as Record<number, number>);
 
