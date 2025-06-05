@@ -159,11 +159,11 @@ export const materialAuslagern = async (
     }
 
     if (benachrichtigungenProduktion.length > 0) {
-      await axios.post('http://produktion-service/material-bereitgestellt', benachrichtigungenProduktion);
+      await axios.post('https://backend-your-shirt-gmbh-production.up.railway.app/materialBestellung/materialien-bereitgestellt', benachrichtigungenProduktion);
     }
 
     if (benachrichtigungenProduktionRohm.length > 0) {
-      await axios.post('http://produktion-service/material-bereitgestellt', benachrichtigungenProduktionRohm);
+      await axios.post('https://backend-your-shirt-gmbh-production.up.railway.app/materialKanister/api/bereitstellen', benachrichtigungenProduktionRohm);
     }
 
     if (benachrichtigungenVerkauf.length > 0) {
@@ -175,7 +175,7 @@ export const materialAuslagern = async (
     console.error('Fehler beim Auslagern von Aufträgen:', error);
     return reply.status(500).send({ error: 'Auslagerung fehlgeschlagen' });
   }
-};
+}
 
 // GET: Historie
 export const getHistorie = async (_req: FastifyRequest, reply: FastifyReply) => {
