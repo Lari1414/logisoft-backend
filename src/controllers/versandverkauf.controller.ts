@@ -93,7 +93,7 @@ export const materialBestaendeAbrufen = async (
       const reserviert = await prisma.auftrag.aggregate({
         where: {
           material_ID: material.material_ID,
-          status: 'Auslagerung angefordert',
+          status: 'auslagerung angefordert',
         },
         _sum: { menge: true },
       });
@@ -166,7 +166,7 @@ export async function erstelleAuslagerungsAuftraegeVerkauf(
       const reservierungen = await prisma.auftrag.findMany({
         where: {
           material_ID,
-          status: 'Auslagerung angefordert',
+          status: 'auslagerung angefordert',
         },
         select: {
           menge: true,
@@ -177,7 +177,7 @@ export async function erstelleAuslagerungsAuftraegeVerkauf(
       const reservierteMengen = reservierungen.reduce((acc, auftrag) => {
         if (auftrag.lagerbestand_ID !== null) {
           acc[auftrag.lagerbestand_ID] =
-          (acc[auftrag.lagerbestand_ID] || 0) + auftrag.menge;
+            (acc[auftrag.lagerbestand_ID] || 0) + auftrag.menge;
         }
         return acc;
       }, {} as Record<number, number>);
@@ -214,7 +214,7 @@ export async function erstelleAuslagerungsAuftraegeVerkauf(
             lager_ID: bestand.lager_ID,
             material_ID,
             menge: entnahme,
-            status: 'Auslagerung angefordert',
+            status: 'auslagerung angefordert',
             lagerbestand_ID: bestand.lagerbestand_ID,
             angefordertVon: 'Verkauf und Versand',
             bestellposition: bestellposition ?? null,

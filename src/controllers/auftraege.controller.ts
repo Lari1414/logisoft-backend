@@ -26,7 +26,7 @@ export const materialEinlagern = async (
         continue;
       }
 
-      if (auftrag.status !== 'Einlagerung angefordert') {
+      if (auftrag.status !== 'einlagerung angefordert') {
         console.warn(`Auftrag ${auftragId} hat Status "${auftrag.status}" – übersprungen`);
         continue;
       }
@@ -57,15 +57,15 @@ export const materialEinlagern = async (
       await prisma.auftrag.update({
         where: { auftrag_ID: auftragId },
         data: {
-          status: 'Einlagerung abgeschlossen',
+          status: 'einlagerung abgeschlossen',
         },
       });
     }
 
-    return reply.send({ status: 'Einlagerung abgeschlossen' });
+    return reply.send({ status: 'einlagerung abgeschlossen' });
   } catch (error) {
     console.error('Fehler beim Einlagern von Aufträgen:', error);
-    return reply.status(500).send({ error: 'Einlagerung fehlgeschlagen' });
+    return reply.status(500).send({ error: 'einlagerung fehlgeschlagen' });
   }
 };
 
@@ -90,7 +90,7 @@ export const materialAuslagern = async (
         where: { auftrag_ID: auftragId },
       });
 
-      if (!auftrag || auftrag.status !== 'Auslagerung angefordert') {
+      if (!auftrag || auftrag.status !== 'auslagerung angefordert') {
         continue;
       }
 
@@ -128,7 +128,7 @@ export const materialAuslagern = async (
       await prisma.auftrag.update({
         where: { auftrag_ID: auftragId },
         data: {
-          status: 'Auslagerung abgeschlossen',
+          status: 'auslagerung abgeschlossen',
         },
       });
 
@@ -231,7 +231,7 @@ export const materialAuslagern = async (
         }
       }
     }
-    return reply.send({ status: 'Auslagerung abgeschlossen' });
+    return reply.send({ status: 'auslagerung abgeschlossen' });
   } catch (error) {
     console.error('Fehler beim Auslagern von Aufträgen:', error);
     return reply.status(500).send({ error: 'Auslagerung fehlgeschlagen' });
@@ -244,7 +244,7 @@ export const getHistorie = async (_req: FastifyRequest, reply: FastifyReply) => 
     const historie = await prisma.auftrag.findMany({
       where: {
         status: {
-          in: ["Einlagerung abgeschlossen", "Auslagerung abgeschlossen"],
+          in: ["einlagerung abgeschlossen", "auslagerung abgeschlossen"],
         },
       },
       include: {
@@ -270,7 +270,7 @@ export const getAuftraege = async (_req: FastifyRequest, reply: FastifyReply) =>
     const auftraege = await prisma.auftrag.findMany({
       where: {
         status: {
-          in: ["Einlagerung angefordert", "Auslagerung angefordert"],
+          in: ["einlagerung angefordert", "auslagerung angefordert"],
         },
       },
       orderBy: {
@@ -285,13 +285,13 @@ export const getAuftraege = async (_req: FastifyRequest, reply: FastifyReply) =>
   }
 };
 
-// GET: Aufträge mit Status "Einlagerung angefordert"
+// GET: Aufträge mit Status "einlagerung angefordert"
 export const getEinlagerungsAuftraege = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const auftraege = await prisma.auftrag.findMany({
       where: {
         status: {
-          in: ["Einlagerung angefordert"],
+          in: ["einlagerung angefordert"],
         },
       },
       orderBy: {
@@ -306,13 +306,13 @@ export const getEinlagerungsAuftraege = async (_req: FastifyRequest, reply: Fast
   }
 };
 
-// GET: Aufträge mit Status "Auslagerung angefordert"
+// GET: Aufträge mit Status "auslagerung angefordert"
 export const getAuslagerungsAuftraege = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const auftraege = await prisma.auftrag.findMany({
       where: {
         status: {
-          in: ["Auslagerung angefordert"],
+          in: ["auslagerung angefordert"],
         },
       },
       orderBy: {

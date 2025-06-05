@@ -67,7 +67,7 @@ export const produktionBestelltMaterial = async (
             const reservierungen = await prisma.auftrag.findMany({
                 where: {
                     material_ID: material.material_ID,
-                    status: 'Auslagerung angefordert',
+                    status: 'auslagerung angefordert',
                 },
                 select: { menge: true, lagerbestand_ID: true },
             });
@@ -107,7 +107,7 @@ export const produktionBestelltMaterial = async (
                         lager_ID: bestand.lager_ID,
                         material_ID: material.material_ID,
                         menge: entnahme,
-                        status: 'Auslagerung angefordert',
+                        status: 'auslagerung angefordert',
                         lagerbestand_ID: bestand.lagerbestand_ID,
                         angefordertVon: 'Produktion',
                     },
@@ -188,7 +188,7 @@ export const produktionBestelltRohmaterial = async (
             const reservierungen = await prisma.auftrag.findMany({
                 where: {
                     material_ID: material.material_ID,
-                    status: 'Auslagerung angefordert',
+                    status: 'auslagerung angefordert',
                 },
                 select: { lagerbestand_ID: true, menge: true },
             });
@@ -228,7 +228,7 @@ export const produktionBestelltRohmaterial = async (
                         lager_ID: rohLager.lager_ID,
                         material_ID: material.material_ID,
                         menge: auftragsMenge,
-                        status: 'Auslagerung angefordert',
+                        status: 'auslagerung angefordert',
                         lagerbestand_ID: bestand.lagerbestand_ID,
                         angefordertVon: 'Produktion',
                     },
@@ -329,7 +329,7 @@ export const rohmaterialZurueckgeben = async (
                     material_ID: artikelnummer,
                     lager_ID: rohLager.lager_ID,
                     menge,
-                    status: 'Einlagerung angefordert',
+                    status: 'einlagerung angefordert',
                     lagerbestand_ID: bestand.lagerbestand_ID,
                     angefordertVon: 'Produktion',
                 },
@@ -339,7 +339,7 @@ export const rohmaterialZurueckgeben = async (
                 auftraegeErstellt = true;
                 result.push({
                     artikelnummer,
-                    status: 'Einlagerung angefordert',
+                    status: 'einlagerung angefordert',
                     auftrag_ID: auftrag.auftrag_ID,
                 });
             } else {
@@ -403,13 +403,13 @@ export const fertigmaterialAnliefern = async (
                     material_ID: material.material_ID,
                     lager_ID: fertigLager.lager_ID,
                     menge,
-                    status: 'Einlagerung angefordert',
+                    status: 'einlagerung angefordert',
                     lagerbestand_ID: bestand.lagerbestand_ID,
                     angefordertVon: 'Produktion',
                 },
             });
 
-            result.push({ artikelnummer, status: 'Einlagerung angefordert', auftrag_ID: auftrag.auftrag_ID });
+            result.push({ artikelnummer, status: 'einlagerung angefordert', auftrag_ID: auftrag.auftrag_ID });
         }
 
         return reply.status(200).send();
