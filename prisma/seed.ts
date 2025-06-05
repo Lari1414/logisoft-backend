@@ -71,7 +71,7 @@ async function main() {
   );
 
   const typVarianten = ['V-Ausschnitt', 'Oversize', 'Top', 'Sport', 'Rundhals'];
-  const groessen = ['S', 'M', 'L'];
+  const groessen = ['XS', 'S', 'M', 'L', 'XL'];
 
   const standardFarben = [
     { name: 'Weiß', cmyk: { cyan: 0, magenta: 0, yellow: 0, black: 0 } },
@@ -145,13 +145,6 @@ async function main() {
       lager_ID: rohmaterialLager.lager_ID,
       category: 'Verpackung',
       standardmaterial: true,
-      typ: 'Karton braun',
-      groesse: null,
-      url: null,
-      farbe: null,
-      farbe_json: {
-        cyan: null, magenta: null, yellow: null, black: null
-      },
     },
   });
 
