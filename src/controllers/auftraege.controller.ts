@@ -122,11 +122,16 @@ export const materialAuslagern = async (
       const qualitaet = await prisma.qualitaet.findUnique({
         where: { qualitaet_ID: bestand.qualitaet_ID ?? 0 },
       });
+      console.log('bestand', bestand);
+      console.log('qualitaet', qualitaet);
+      console.log('material', material);
+      console.log('auftrag', auftrag);
 
       if (auftrag.angefordertVon === 'Produktion') {
-
+        console.log('angefordert von Produktion');
         if (['Farbe', 'Druckfolie', 'Verpackung'].includes(material.category)) {
           if (['Farbe'].includes(material.category)) {
+            console.log('Farbe');
             benachrichtigungenProduktionRohm.push({
               bezeichnung: material.category,
               ppml: qualitaet?.ppml || 0,
@@ -136,13 +141,14 @@ export const materialAuslagern = async (
             });
           }
           else {
+            console.log('Druckfolie oder Verpackung');
             benachrichtigungenProduktionRohm.push({
               bezeichnung: material.category,
               menge: auftrag.menge,
             });
           }
         } else {
-
+          console.log('T-Shirt');
           benachrichtigungenProduktion.push({
             artikelnummer: material.material_ID,
             saugfaehigkeit: qualitaet?.saugfaehigkeit || 0,
@@ -151,6 +157,7 @@ export const materialAuslagern = async (
           });
         }
       } else if (auftrag.angefordertVon === 'Verkauf und Versand') {
+        console.log('angefordert von Verkauf und Versand');
         benachrichtigungenVerkauf.push({
           bestellposition: auftrag.bestellposition,
           status: 'abholbereit',
