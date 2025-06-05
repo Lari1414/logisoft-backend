@@ -91,6 +91,7 @@ export const getAllMaterialbestellungenBestellen = async (_req: FastifyRequest, 
         materialbestellung_ID: 'asc',
       },
     });
+
     return reply.send(bestellungen);
   } catch (error) {
     console.error(error);
@@ -131,6 +132,25 @@ export const updateMaterialbestellungenStatus = async (
 ) => {
   try {
     const { ids } = req.body;
+
+    const bestellungen = await prisma.materialbestellung.findMany({
+      where: {
+        materialbestellung_ID: { in: ids },
+        status: 'offen',
+      },
+      include: {
+        lieferant: true,
+      },
+    });
+
+    const ohneLieferant = bestellungen.filter(b => b.lieferant === null);
+
+    if (ohneLieferant.length > 0) {
+      return reply.status(400).send({
+        error: 'Folgende Bestellungen haben keinen zugewiesenen Lieferanten und können nicht bestellt werden.',
+        fehlendeLieferanten: ohneLieferant.map(b => b.materialbestellung_ID),
+      });
+    }
 
     const result = await prisma.materialbestellung.updateMany({
       where: {
