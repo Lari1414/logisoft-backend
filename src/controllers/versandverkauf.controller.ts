@@ -53,8 +53,7 @@ export const materialBestaendeAbrufen = async (
         farbe_json.cyan === 0 &&
         farbe_json.magenta === 0 &&
         farbe_json.yellow === 0 &&
-        farbe_json.black === 0 &&
-        (!aufdruck || aufdruck.trim() === '');
+        farbe_json.black === 0;
 
       const zielLager = isRohmaterial ? rohLager : fertigLager;
 
