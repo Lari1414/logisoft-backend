@@ -33,7 +33,7 @@ export const materialBestaendeAbrufen = async (
           typeof a.groesse !== 'string' ||
           typeof a.typ !== 'string' ||
           typeof a.farbe_json !== 'object' ||
-          (typeof a.aufdruck !== 'string' && a.aufdruck !== null)
+          (typeof a.aufdruck !== 'string' && a.aufdruck !== null && a.aufdruck !== undefined)
       )
     ) {
       return reply.status(400).send({ error: 'Ungültiges Anfrageformat' });
@@ -53,7 +53,8 @@ export const materialBestaendeAbrufen = async (
         farbe_json.cyan === 0 &&
         farbe_json.magenta === 0 &&
         farbe_json.yellow === 0 &&
-        farbe_json.black === 0;
+        farbe_json.black === 0 &&
+        (!aufdruck || aufdruck.trim() === '');
 
       const zielLager = isRohmaterial ? rohLager : fertigLager;
 
