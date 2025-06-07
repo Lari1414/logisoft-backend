@@ -75,7 +75,7 @@ export const materialBestaendeAbrufen = async (
           data: {
             lager_ID: zielLager.lager_ID,
             category,
-            farbe_json: { equals: farbe_json },
+            farbe_json: farbe_json,
             url: aufdruck,
             groesse,
             farbe: hexCode,
