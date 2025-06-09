@@ -7,7 +7,8 @@ import {
   getAllMaterialbestellungenBestellt,
   getAllMaterialbestellungenBestellen,
   updateMaterialbestellungenStatus,
-  createWareneingaengeZuBestellung
+  createWareneingaengeZuBestellung,
+  updateBestellungById
 } from '../controllers/materialbestellung.controller'
 
 export default async function materialbestellungRoutes(app: FastifyInstance) {
@@ -23,6 +24,7 @@ export default async function materialbestellungRoutes(app: FastifyInstance) {
 
   // PUT
   app.put('/absenden', updateMaterialbestellungenStatus);
+  app.put('/:id', updateBestellungById)
 
   // DELETE
   app.delete('/:id', deleteMaterialbestellungById);

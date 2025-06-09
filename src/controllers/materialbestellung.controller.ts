@@ -126,7 +126,7 @@ export const getMaterialbestellungById = async (
   }
 };
 
-// PUT: Bestellung aktualisieren
+// PUT: Bestellungen Status aktualisieren
 export const updateMaterialbestellungenStatus = async (
   req: FastifyRequest<{ Body: { ids: number[] } }>,
   reply: FastifyReply
@@ -167,6 +167,29 @@ export const updateMaterialbestellungenStatus = async (
   } catch (error: any) {
     console.error(error);
     return reply.status(500).send({ error: 'Fehler beim Aktualisieren der Bestellungen' });
+  }
+};
+
+// PUT: Bestellung aktualisieren
+export const updateBestellungById = async (
+  req: FastifyRequest<{ Params: { id: number }; Body: Partial<BestellungInput> }>,
+  reply: FastifyReply
+) => {
+  try {
+    const updated = await prisma.materialbestellung.update({
+      where: { materialbestellung_ID: req.params.id },
+      data: req.body,
+    });
+
+    return reply.send(updated);
+  } catch (error: any) {
+    console.error(error);
+
+    if (error.code === 'P2025') {
+      return reply.status(404).send({ error: 'Materialbestellung nicht gefunden' });
+    }
+
+    return reply.status(500).send({ error: 'Fehler beim Aktualisieren der Bestellung' });
   }
 };
 
