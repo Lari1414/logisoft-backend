@@ -172,12 +172,14 @@ export const updateMaterialbestellungenStatus = async (
 
 // PUT: Bestellung aktualisieren
 export const updateBestellungById = async (
-  req: FastifyRequest<{ Params: { id: number }; Body: Partial<BestellungInput> }>,
+  req: FastifyRequest<{ Params: { id: string }; Body: Partial<BestellungInput> }>,
   reply: FastifyReply
 ) => {
   try {
+    const bestellId = parseInt(req.params.id, 10);
+
     const updated = await prisma.materialbestellung.update({
-      where: { materialbestellung_ID: req.params.id },
+      where: { materialbestellung_ID: bestellId },
       data: req.body,
     });
 
