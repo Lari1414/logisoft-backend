@@ -15,7 +15,7 @@ export async function createServer(): Promise<FastifyInstance> {
       'http://localhost:5173',
       'http://localhost:80',
       'https://mawi-frontend-c4g8d9befvdjg4ae.swedencentral-01.azurewebsites.net',
-      'https://frontend-your-shirt-gmbh.vercel.app/produktion',
+      'https://frontend-your-shirt-gmbh.vercel.app',
       'https://backend-your-shirt-gmbh-production.up.railway.app'
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
