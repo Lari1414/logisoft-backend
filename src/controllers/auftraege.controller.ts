@@ -60,6 +60,39 @@ export const materialEinlagern = async (
           status: 'einlagerung abgeschlossen',
         },
       });
+
+      if (auftrag.material_ID === null) {
+        continue;
+      }
+
+      const material = await prisma.material.findUnique({
+        where: { material_ID: auftrag.material_ID },
+      });
+
+      if (!material) {
+        continue;
+      }
+
+      const benachrichtigungenVerkauf: any[] = [];
+
+      if (auftrag.angefordertVon == 'Produktion' && auftrag.bestellposition != null) {
+        benachrichtigungenVerkauf.push({
+          artikelnummer: material.material_ID,
+          bestellposition: auftrag.bestellposition,
+          status: 'READY_FOR_PICKUP',
+        });
+      }
+
+      if (benachrichtigungenVerkauf.length > 0) {
+        console.log('Benachrichtigungen für Verkauf:', benachrichtigungenVerkauf);
+
+        for (const benachrichtigung of benachrichtigungenVerkauf) {
+          await axios.patch(
+            'https://code-vision-backend-fmcchjhwd5ejfbgn.westeurope-01.azurewebsites.net/position/' + benachrichtigung.bestellposition,
+            { status: benachrichtigung.status }
+          );
+        }
+      }
     }
 
     return reply.send({ status: 'einlagerung abgeschlossen' });
