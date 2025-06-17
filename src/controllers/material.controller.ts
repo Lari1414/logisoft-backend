@@ -32,9 +32,7 @@ export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialB
         lager_ID,
         category,
         farbe: hexCode,
-        farbe_json: {
-          equals: farbe_json,
-        },
+        farbe_json,
         standardmaterial,
         typ,
         groesse,
