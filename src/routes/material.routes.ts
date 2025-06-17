@@ -7,7 +7,8 @@ import {
   deleteMaterialById,
   getRawMaterials,
   getFinishedMaterials,
-  getAllMaterialCategories
+  getAllMaterialCategories,
+  getStandardMaterials
 } from '../controllers/material.controller';
 
 
@@ -18,6 +19,7 @@ export default async function materialRoutes(app: FastifyInstance) {
   app.get('/fertig', getFinishedMaterials);
   app.get('/:id', getMaterialById);
   app.get('/kategorien', getAllMaterialCategories);
+  app.get('/standards', getStandardMaterials);
 
   // POST
   app.post('/', createMaterial);

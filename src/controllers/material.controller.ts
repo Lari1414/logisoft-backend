@@ -53,6 +53,24 @@ export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialB
 export const getAllMaterials = async (req: FastifyRequest, reply: FastifyReply) => {
   try {
     const materials = await prisma.material.findMany({
+      orderBy: {
+        material_ID: 'asc',
+      },
+    });
+    return reply.send(materials);
+  } catch (error) {
+    console.error(error);
+    return reply.status(500).send({
+      error: 'Fehler beim Abrufen der Materialien',
+      message: error,
+    });
+  }
+};
+
+// GET: Standard Materialien abrufen
+export const getStandardMaterials = async (req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const materials = await prisma.material.findMany({
       where: {
         standardmaterial: true,
       },
