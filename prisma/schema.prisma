@@ -19,6 +19,7 @@ model Material {
   groesse          String?
   url              String?
   standardmaterial Boolean
+  materialbezeichnung String?
 
   lager          Lager                @relation(fields: [lager_ID], references: [lager_ID])
   eingaenge      Wareneingang[]

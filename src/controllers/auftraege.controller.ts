@@ -302,6 +302,11 @@ export const getAuftraege = async (_req: FastifyRequest, reply: FastifyReply) =>
           in: ["einlagerung angefordert", "auslagerung angefordert"],
         },
       },
+      include: {
+        material: true,
+        lager: true,
+        lagerbestand: true
+      },
       orderBy: {
         auftrag_ID: 'asc'
       }
@@ -323,6 +328,11 @@ export const getEinlagerungsAuftraege = async (_req: FastifyRequest, reply: Fast
           in: ["einlagerung angefordert"],
         },
       },
+      include: {
+        material: true,
+        lager: true,
+        lagerbestand: true
+      },
       orderBy: {
         auftrag_ID: 'asc'
       }
@@ -343,6 +353,11 @@ export const getAuslagerungsAuftraege = async (_req: FastifyRequest, reply: Fast
         status: {
           in: ["auslagerung angefordert"],
         },
+      },
+      include: {
+        material: true,
+        lager: true,
+        lagerbestand: true
       },
       orderBy: {
         auftrag_ID: 'asc'

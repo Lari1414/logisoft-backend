@@ -19,6 +19,7 @@ export const materialBestaendeAbrufen = async (
       };
       typ: string;
       standardmaterial: boolean | null;
+      materialbezeichnung: string | null;
     }[];
   }>,
   reply: FastifyReply
@@ -49,7 +50,7 @@ export const materialBestaendeAbrufen = async (
 
     const result = [];
 
-    for (const { category, aufdruck, groesse, farbe_json, typ, standardmaterial } of anfragen) {
+    for (const { category, aufdruck, groesse, farbe_json, typ, standardmaterial, materialbezeichnung } of anfragen) {
       const isRohmaterial =
         farbe_json.cyan === 0 &&
         farbe_json.magenta === 0 &&
@@ -82,6 +83,7 @@ export const materialBestaendeAbrufen = async (
             farbe: hexCode,
             typ,
             standardmaterial: standardmaterial ?? false,
+            materialbezeichnung: materialbezeichnung ?? null,
           },
         });
       }

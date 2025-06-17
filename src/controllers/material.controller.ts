@@ -8,6 +8,7 @@ interface CreateMaterialBody {
   lager_ID: number;
   category: string;
   standardmaterial: boolean;
+  materialbezeichnung: string | null;
   farbe_json: {
     cyan: number;
     magenta: number;
@@ -23,7 +24,7 @@ interface CreateMaterialBody {
 // POST: Material erstellen
 export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialBody }>, reply: FastifyReply) => {
   try {
-    const { lager_ID, category, typ, groesse, url, farbe_json, standardmaterial } = req.body;
+    const { lager_ID, category, typ, groesse, url, farbe_json, standardmaterial, materialbezeichnung } = req.body;
 
     const hexCode = cmykToHex(farbe_json);
 
@@ -34,6 +35,7 @@ export const createMaterial = async (req: FastifyRequest<{ Body: CreateMaterialB
         farbe: hexCode,
         farbe_json,
         standardmaterial,
+        materialbezeichnung,
         typ,
         groesse,
         url,
