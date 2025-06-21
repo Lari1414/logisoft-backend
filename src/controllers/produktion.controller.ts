@@ -364,7 +364,7 @@ export const rohmaterialZurueckgeben = async (
 // Erfasst die Anlieferung von Fertigmaterial mit Mengen und zugehöriger URL
 export const fertigmaterialAnliefern = async (
     req: FastifyRequest<{
-        Body: { bestellposition: string; artikelnummer: number; url: string; menge: number }[];
+        Body: { bestellposition: string; artikelnummer: number; url: string | null; menge: number }[];
     }>,
     reply: FastifyReply
 ) => {
