@@ -382,7 +382,10 @@ export const fertigmaterialAnliefern = async (
 
         for (const { bestellposition, artikelnummer, url, menge } of rueckgaben) {
             const material = await prisma.material.findFirst({
-                where: { material_ID: artikelnummer, url },
+                where: {
+                    material_ID: artikelnummer,
+                    url: url ?? null
+                },
             });
 
             if (!material) return reply.status(500).send({ error: 'Material nicht gefunden: Einlagerung fehlgeschlagen' });
