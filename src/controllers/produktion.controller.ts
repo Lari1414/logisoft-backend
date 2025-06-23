@@ -384,14 +384,15 @@ export const fertigmaterialAnliefern = async (
         for (const { bestellposition, artikelnummer, url, menge } of rueckgaben) {
             const whereClause: any = {
                 material_ID: artikelnummer,
+                url:url
             };
 
             // Wenn URL null ist, nach leerem String suchen
-            if (url === null) {
+           /* if (url === null) {
                 whereClause.url = "";
             } else {
                 whereClause.url = url;
-            }
+            }*/
 
             const material = await prisma.material.findFirst({
                 where: whereClause,
