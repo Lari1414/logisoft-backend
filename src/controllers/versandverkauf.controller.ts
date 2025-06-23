@@ -63,7 +63,7 @@ export const materialBestaendeAbrufen = async (
       let material = await prisma.material.findFirst({
         where: {
           category,
-          url: aufdruck,
+          url: aufdruck ,
           groesse,
           farbe_json: {
             equals: {
@@ -85,7 +85,7 @@ export const materialBestaendeAbrufen = async (
             lager_ID: zielLager.lager_ID,
             category,
             farbe_json: farbe_json,
-            url: aufdruck,
+            url: aufdruck??null,
             groesse,
             farbe: hexCode,
             typ,
