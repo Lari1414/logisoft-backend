@@ -65,7 +65,14 @@ export const materialBestaendeAbrufen = async (
           category,
           url: aufdruck,
           groesse,
-          farbe_json: { equals: farbe_json },
+          farbe_json: {
+            equals: {
+              cyan: farbe_json.cyan,
+              magenta: farbe_json.magenta,
+              yellow: farbe_json.yellow,
+              black: farbe_json.black
+            }
+          },
           typ,
         },
       });
