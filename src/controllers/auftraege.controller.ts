@@ -204,7 +204,7 @@ export const materialAuslagern = async (
         benachrichtigungenVerkauf.push({
           artikelnummer: material.material_ID,
           bestellposition: auftrag.bestellposition,
-          status: 'READY_FOR_SHIPMENT',
+          status: 'READY_FOR_INSPECTION',
         });
       }
     }
