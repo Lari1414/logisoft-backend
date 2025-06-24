@@ -109,13 +109,29 @@ export const createEingang = async (
   }
 };
 
-// Gibt alle Wareneingänge zurück
-export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply) => {
+// Gibt alle Wareneingänge zurück außer Reklamationen
+export const getAllEingaengeOhneRekl = async (_req: FastifyRequest, reply: FastifyReply) => {
   try {
     const result = await prisma.wareneingang.findMany({
       where: {
         status: { not: "reklamiert" }
       },
+      include: { material: true, materialbestellung: true },
+      orderBy: {
+        eingang_ID: 'asc',
+      },
+    });
+    reply.send(result);
+  } catch (err) {
+    console.error(err);
+    reply.status(500).send({ error: 'Fehler beim Abrufen der Wareneingänge' });
+  }
+};
+
+// Gibt alle Wareneingänge zurück
+export const getAllEingaenge = async (_req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const result = await prisma.wareneingang.findMany({
       include: { material: true, materialbestellung: true },
       orderBy: {
         eingang_ID: 'asc',

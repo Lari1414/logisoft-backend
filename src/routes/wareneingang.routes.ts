@@ -9,14 +9,16 @@ import {
   updateEingaengeEntsperren,
   wareneingangEingelagern,
   getAllEingaengeHeute,
-  createReklamation
+  createReklamation,
+  getAllEingaengeOhneRekl
 } from '../controllers/wareneingang.controller';
 
 export default async function wareneingangRoutes(app: FastifyInstance) {
   // GET
-  app.get('/', getAllEingaenge);
+  app.get('/', getAllEingaengeOhneRekl);
   app.get('/:id', getEingangById);
   app.get('/heute', getAllEingaengeHeute)
+  app.get('/alle', getAllEingaenge);
 
   // POST
   app.post('/', createEingang);
